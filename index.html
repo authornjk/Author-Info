@@ -4,6 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>A Bookish Summer Soirée — Author Info</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
+<meta name="apple-mobile-web-app-title" content="Soirée: Authors">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#F7EFE1">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Alex+Brush&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Montserrat:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,600;1,400&display=swap');
@@ -132,6 +139,7 @@
   .btn-row{ display:flex; gap:12px; flex-wrap:wrap; margin-top:28px; }
   .btn-block{ width:100%; justify-content:center; }
   .btn-compact{ padding:9px 18px; font-size:12.5px; }
+  .btn-tiny{ padding:6px 14px; font-size:11px; }
 
   /* ---------- Author select ---------- */
   .author-grid{
@@ -205,6 +213,7 @@
     line-height:1.6;
     white-space:pre-line;
   }
+  .field .help a{ color:var(--terracotta); font-weight:600; text-decoration:underline; }
   .field input[type=text],
   .field input[type=email],
   .field input[type=url],
@@ -371,11 +380,18 @@
   }
   .date-item .detail{
     display:block;
+    position:relative;
     font-family:'Lora',serif;
     font-size:14px;
     color:var(--navy);
     padding-left:0.44in;
     line-height:1.6;
+  }
+  .date-item .detail::before{
+    content:"\2022";
+    position:absolute;
+    left:0.38in;
+    color:var(--terracotta);
   }
   .date-item .detail + .detail{ margin-top:2px; }
   .cal-link{
@@ -541,7 +557,7 @@ const STEPS = {
   },
 
   "book-signing-plan": {
-    title: "The Book Signing", icon: FLOURISH.f2,
+    title: "The Book Signing", icon: FLOURISH.bookStack,
     sub: "You're welcome to bring books to sell, do a pre-sale, both, or neither — whatever works for you.",
     fields: [
       {key:"bookSigningPlan", label:"You plan to:", type:"radio", required:true, options:[
@@ -581,10 +597,10 @@ const STEPS = {
   },
 
   "presale-link": {
-    title: "Pre-sale Book Link", icon: FLOURISH.f1,
+    title: "Pre-sale Book Link", dividerBelow: FLOURISH.f1,
     sub: "We'll post pre-sale links for all attendees, which is why we're collecting this.",
     fields: [
-      {key:"presaleLink", label:"What link do you want people to use to pre-order books?", type:"text", help:"Google Form, email, website — wherever/however you want them to pre-order. If you'd like to use our generic pre-sale form, just type \u201cwill use your google form\u201d and we'll send you an editable link."}
+      {key:"presaleLink", label:"What link do you want people to use to pre-order books?", type:"text", helpHtml: "Whether you're using a Google form, email, or something else, we need a link to where people can preorder books from you.<br><br>If you don't have a link, or don't love your form, we have one you can customize and use as you'd like. Click <a href=\"https://forms.gle/3oYiZVmMW4AEPKFt5\" target=\"_blank\" rel=\"noopener\">HERE</a> to look at the form (<em>The form will open in a separate window, and you won't lose your progress</em>). If you'd like to use that form type \u201cwill use your google form\u201d and we'll send you an editable link."}
     ],
     next: () => "swag-prizes"
   },
@@ -741,11 +757,15 @@ const IMPORTANT_DATES = [
   },
   {
     title:"Your Book Signing Table",
-    details:["You can set up your table anytime between 10:00am–12:00pm."]
+    details:[
+      "You can set up your table anytime between 10:00am–12:00pm.",
+      "A tablecloth will be provided.",
+      "You will share a banquet table with one of the other authors."
+    ]
   },
   {
     title:"Author Pictures",
-    details:["At 12:00pm we will start taking individual and group photos."]
+    details:["We will take photos as an author group before the doors open. Those will start at 12:00pm."]
   },
   {
     title:"Author Dinner",
@@ -879,8 +899,7 @@ function buildDateBox(){
     let inner = `<span class="heading">${d.title}</span>`;
     d.details.forEach(line=>{ inner += `<span class="detail">${line}</span>`; });
     if(d.ics){
-      const fname = d.ics.title.replace(/[^a-z0-9]+/gi,'-') + ".ics";
-      inner += `<a class="cal-link" href="${icsDataUrl(d.ics)}" download="${fname}">+ Add to calendar</a>`;
+      inner += `<a class="cal-link" href="${icsDataUrl(d.ics)}" target="_blank" rel="noopener">+ Add to calendar</a>`;
     }
     item.innerHTML = inner;
     dateBox.appendChild(item);
@@ -984,7 +1003,8 @@ function renderWelcome(returning){
       <li>Depending on how many attendees travel from out of town, we might get a hotel deal. We won't know until after tickets go on sale.</li>
     </ul>
     <p>That's all the info from me for now. ${returning ? "" : "Let's get you going on this form."}</p>
-    <p class="signature-line">Thanks again,<br>Nicole J Kimzey,
+    <p>Thanks again,<br>Nicole J Kimzey</p>
+    <p class="signature-line">
     <a href="https://www.instagram.com/authornicolejkimzey/" target="_blank" rel="noopener">@authornicolejkimzey</a>
     <a href="https://www.instagram.com/bookishsummersoiree/" target="_blank" rel="noopener">@bookishsummersoiree</a></p>
   `;
@@ -1012,6 +1032,15 @@ function renderWelcome(returning){
     btnRow.appendChild(go);
   }
   card.appendChild(btnRow);
+
+  if(!returning){
+    const backLink = document.createElement('div');
+    backLink.className = "home-link";
+    backLink.textContent = "Back to main screen";
+    backLink.onclick = () => { currentAuthor = null; currentData = null; currentScreen = "author-select"; render(); };
+    card.appendChild(backLink);
+  }
+
   app.appendChild(card);
 }
 
@@ -1366,7 +1395,7 @@ function renderSection(){
   const btnRow = document.createElement('div');
   btnRow.className = "btn-row";
   const back = document.createElement('button');
-  back.className = "btn btn-secondary btn-compact";
+  back.className = "btn btn-secondary btn-tiny";
   back.textContent = "\u2190 Back";
   back.onclick = async () => {
     collectFieldValues(step);
@@ -1378,7 +1407,7 @@ function renderSection(){
   saveNext.textContent = "Yes, save & continue";
   saveNext.onclick = () => advanceStep(step);
   const saveExit = document.createElement('button');
-  saveExit.className = "btn btn-secondary btn-compact";
+  saveExit.className = "btn btn-secondary btn-tiny";
   saveExit.textContent = "Save & return home";
   saveExit.onclick = async () => {
     collectFieldValues(step);
@@ -1387,10 +1416,15 @@ function renderSection(){
     currentScreen = "home";
     render();
   };
-  btnRow.appendChild(back);
   btnRow.appendChild(saveNext);
-  btnRow.appendChild(saveExit);
   card.appendChild(btnRow);
+
+  const btnRowSecondary = document.createElement('div');
+  btnRowSecondary.className = "btn-row";
+  btnRowSecondary.style.marginTop = "8px";
+  btnRowSecondary.appendChild(back);
+  btnRowSecondary.appendChild(saveExit);
+  card.appendChild(btnRowSecondary);
 
   const link = document.createElement('div');
   link.className = "home-link";
@@ -1413,10 +1447,11 @@ function renderField(f){
   const label = document.createElement('label');
   label.innerHTML = f.label + (f.required ? ' <span class="req">*</span>' : '');
   if(f.label) wrap.appendChild(label);
-  if(f.help){
+  if(f.help || f.helpHtml){
     const help = document.createElement('div');
     help.className = "help";
-    help.textContent = f.help;
+    if(f.helpHtml) help.innerHTML = f.helpHtml;
+    else help.textContent = f.help;
     wrap.appendChild(help);
   }
 
