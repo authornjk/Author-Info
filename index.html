@@ -13,6 +13,7 @@
 <meta name="theme-color" content="#F7EFE1">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Alex+Brush&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Montserrat:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,600;1,400&display=swap');
 
@@ -786,7 +787,7 @@ const IMPORTANT_DATES = [
     ics: {
       title:"A Bookish Summer Soirée",
       start:"20270612T123000", end:"20270612T180000",
-      details:"The book signing portion begins around 4:00pm.",
+      details:"\u2022 10:00am-12:00pm: Set up your table.\n\u2022 12:00: Photos.\n\u2022 12:30: Doors open.\n\u2022 12:30-4:00(ish): Have an insane amount of fun!\n\u2022 4:00(ish)-6:00pm: Book signing (which will still be an insane amount of fun!).",
       location: VENUE_ADDRESS
     }
   },
@@ -825,7 +826,7 @@ function icsDataUrl({title,start,end,details,location}){
     `DTSTART;TZID=America/Denver:${start}`,
     `DTEND;TZID=America/Denver:${end}`,
     `SUMMARY:${title}`,
-    `DESCRIPTION:${(details||"").replace(/,/g,'\\,')}`,
+    `DESCRIPTION:${(details||"").replace(/,/g,'\\,').replace(/\n/g,'\\n')}`,
     `LOCATION:${(location||"").replace(/,/g,'\\,')}`,
     "END:VEVENT","END:VCALENDAR"
   ].join("\r\n");
@@ -858,8 +859,11 @@ function pushToSheet(action, payload){
    fallback if the network request fails. */
 async function loadAuthorData(author){
   try{
-    const url = `${APPS_SCRIPT_URL}?action=getAuthorData&authorName=${encodeURIComponent(author)}`;
-    const res = await fetch(url);
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({ action: "getAuthorData", authorName: author })
+    });
     const json = await res.json();
     if(json && json.success && json.exists){
       const data = { meta: { welcomeSeen: !!json.meta.welcomeSeen, currentStep: json.meta.currentStep || "general-info", generalInfoUpdatedAt:null }, ...json.data };
@@ -913,6 +917,14 @@ function goBackSection(){
     currentScreen = "home";
     render();
   }
+}
+
+function appendMainScreenLink(container){
+  const mainLink = document.createElement('div');
+  mainLink.className = "home-link";
+  mainLink.textContent = "Return to main screen";
+  mainLink.onclick = () => { currentAuthor = null; currentData = null; currentScreen = "author-select"; render(); };
+  container.appendChild(mainLink);
 }
 
 const app = document.getElementById('app');
@@ -1087,13 +1099,11 @@ function renderWelcome(returning){
   }
   card.appendChild(btnRow);
 
-  if(!returning){
-    const backLink = document.createElement('div');
-    backLink.className = "home-link";
-    backLink.textContent = "Back to main screen";
-    backLink.onclick = () => { currentAuthor = null; currentData = null; currentScreen = "author-select"; render(); };
-    card.appendChild(backLink);
-  }
+  const backLink = document.createElement('div');
+  backLink.className = "home-link";
+  backLink.textContent = returning ? "Return to main screen" : "Back to main screen";
+  backLink.onclick = () => { currentAuthor = null; currentData = null; currentScreen = "author-select"; render(); };
+  card.appendChild(backLink);
 
   app.appendChild(card);
 }
@@ -1155,6 +1165,7 @@ function renderDates(){
   link.textContent = "Return to home";
   link.onclick = () => { currentScreen = "home"; render(); };
   card.appendChild(link);
+  appendMainScreenLink(card);
   app.appendChild(card);
 }
 
@@ -1200,6 +1211,7 @@ function renderLookup(kind){
   link.textContent = "Return to home";
   link.onclick = () => { currentScreen = "home"; render(); };
   card.appendChild(link);
+  appendMainScreenLink(card);
   app.appendChild(card);
 }
 
@@ -1233,6 +1245,7 @@ function renderNavSubmenu(){
   link.textContent = "Return to home";
   link.onclick = () => { currentScreen = "home"; render(); };
   card.appendChild(link);
+  appendMainScreenLink(card);
   app.appendChild(card);
 }
 
@@ -1320,6 +1333,7 @@ function renderGraphics(){
   link.textContent = currentAuthor ? "Return to home" : "Back";
   link.onclick = () => { currentScreen = currentAuthor ? "home" : "author-select"; render(); };
   card.appendChild(link);
+  if(currentAuthor) appendMainScreenLink(card);
   app.appendChild(card);
 }
 
@@ -1493,6 +1507,7 @@ function renderSection(){
     render();
   };
   card.appendChild(link);
+  appendMainScreenLink(card);
 
   app.appendChild(card);
   attachAutoAdvance(form);
@@ -1661,6 +1676,10 @@ async function buildQrComposite(templateSrc, url, color){
   canvas.width = templateImg.naturalWidth;
   canvas.height = templateImg.naturalHeight;
   const ctx = canvas.getContext('2d');
+  // White background first — templates have transparent areas, and a PDF
+  // needs a solid backing instead of showing through as black/transparent.
+  ctx.fillStyle = "#FFFFFF";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
   ctx.drawImage(templateImg, 0, 0);
 
   const qrCanvas = document.createElement('canvas');
@@ -1670,21 +1689,36 @@ async function buildQrComposite(templateSrc, url, color){
   return canvas.toDataURL("image/png");
 }
 
+function imageToPdfBase64(pngDataUrl, widthPx, heightPx, dpi){
+  const widthIn = widthPx / dpi;
+  const heightIn = heightPx / dpi;
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF({
+    orientation: widthIn > heightIn ? "landscape" : "portrait",
+    unit: "in",
+    format: [widthIn, heightIn]
+  });
+  pdf.addImage(pngDataUrl, "PNG", 0, 0, widthIn, heightIn);
+  return pdf.output("datauristring").split(",")[1]; // base64 only
+}
+
 /* Generates a QR for every filled-in link field and uploads each to the QR
-   Drive folder. Runs in the background after saving the Links section —
-   never blocks the save, and failures on one QR don't stop the others. */
+   Drive folder as a white-background PDF. Runs in the background after
+   saving the Links section — never blocks the save, and failures on one
+   QR don't stop the others. */
 async function generateAndUploadQrCodes(authorName, data){
   for(const key of Object.keys(QR_TEMPLATES)){
     const url = data[key];
     if(!url || !url.trim()) continue;
     const tpl = QR_TEMPLATES[key];
     try{
-      const composite = await buildQrComposite(tpl.src, url.trim(), tpl.color);
-      const filename = `${authorName} ${tpl.label}.png`;
+      const compositePng = await buildQrComposite(tpl.src, url.trim(), tpl.color);
+      const pdfBase64 = imageToPdfBase64(compositePng, 1200, 1500, 300);
+      const filename = `${authorName} ${tpl.label}.pdf`;
       await fetch(APPS_SCRIPT_URL, {
         method: "POST",
         headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify({ action:"uploadQr", authorName, platform: tpl.label, filename, base64: composite })
+        body: JSON.stringify({ action:"uploadQr", authorName, platform: tpl.label, filename, base64: pdfBase64, mimeType: "application/pdf" })
       });
     }catch(e){ /* one QR failing shouldn't block the others */ }
   }
