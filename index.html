@@ -125,13 +125,13 @@
     color:var(--white);
     box-shadow:0 4px 14px rgba(228,89,63,0.35);
   }
-  .btn-primary:hover{ transform:translateY(-1px); box-shadow:0 6px 18px rgba(228,89,63,0.45); }
+  @media (hover: hover) { .btn-primary:hover{ transform:translateY(-1px); box-shadow:0 6px 18px rgba(228,89,63,0.45); } }
   .btn-secondary{
     background:var(--cream);
     color:var(--navy);
     border:1.5px solid rgba(12,30,61,0.15);
   }
-  .btn-secondary:hover{ background:#f0e6d2; }
+  @media (hover: hover) { .btn-secondary:hover{ background:#f0e6d2; } }
   .btn-ghost{
     background:transparent;
     color:var(--navy);
@@ -174,10 +174,12 @@
     color:var(--navy);
     transition:all .15s ease;
   }
-  .author-tile:hover{
-    background:var(--peach);
-    border-color:var(--terracotta);
-    transform:translateY(-2px);
+  @media (hover: hover) {
+    .author-tile:hover{
+      background:var(--peach);
+      border-color:var(--terracotta);
+      transform:translateY(-2px);
+    }
   }
 
   /* ---------- Home menu ---------- */
@@ -198,7 +200,7 @@
     align-items:center;
     transition:all .15s ease;
   }
-  .menu-item:hover{ background:var(--peach); border-color:var(--terracotta); }
+  @media (hover: hover) { .menu-item:hover{ background:var(--peach); border-color:var(--terracotta); } }
   .menu-item .arrow{ color:var(--terracotta); font-size:18px; }
 
   /* ---------- Fields ---------- */
@@ -261,7 +263,7 @@
     transition:all .12s ease;
   }
   .radio-option span{ text-align:left; }
-  .radio-option:hover{ border-color:var(--terracotta); }
+  @media (hover: hover) { .radio-option:hover{ border-color:var(--terracotta); } }
   .radio-option.selected{ border-color:var(--terracotta); background:var(--peach); }
   .radio-option input{ margin-top:3px; accent-color:var(--terracotta); }
 
@@ -311,7 +313,7 @@
     text-decoration:none;
     cursor:pointer;
   }
-  .home-link:hover{ opacity:1; color:var(--terracotta); }
+  @media (hover: hover) { .home-link:hover{ opacity:1; color:var(--terracotta); } }
 
   .toast{
     position:fixed;
@@ -342,7 +344,7 @@
     cursor:pointer;
     transition:all .12s ease;
   }
-  .dropoff-card:hover{ border-color:var(--terracotta); }
+  @media (hover: hover) { .dropoff-card:hover{ border-color:var(--terracotta); } }
   .dropoff-card.selected{ border-color:var(--terracotta); background:var(--peach); }
   .dropoff-card input{
     position:absolute;
@@ -417,7 +419,7 @@
     padding:3px 10px;
     margin-right:6px;
   }
-  .cal-link:hover{ background:var(--sage); color:var(--white); }
+  @media (hover: hover) { .cal-link:hover{ background:var(--sage); color:var(--white); } }
 
   .travel-list{ list-style:none; margin:0; padding:0; }
   .travel-list li{
@@ -434,7 +436,7 @@
     color:var(--terracotta);
   }
   .welcome-copy a{ color:var(--terracotta); font-weight:600; text-decoration:none; }
-  .welcome-copy a:hover{ text-decoration:underline; }
+  @media (hover: hover) { .welcome-copy a:hover{ text-decoration:underline; } }
   .welcome-copy p{ margin:0 0 16px; }
   .signature-line{ font-family:'Montserrat',sans-serif; font-size:12px; color:#5a5f6b; line-height:1.8; }
   .signature-line a{ font-size:12px; }
