@@ -1786,17 +1786,6 @@ function renderSection(){
   btnRowSecondary.appendChild(saveExit);
   card.appendChild(btnRowSecondary);
 
-  const link = document.createElement('div');
-  link.className = "home-link";
-  link.textContent = "Return to home";
-  link.onclick = async () => {
-    collectFieldValues(step);
-    await saveAuthorData(currentAuthor, currentData);
-    currentScreen = "home";
-    render();
-  };
-  card.appendChild(link);
-
   const chooseLink = document.createElement('div');
   chooseLink.className = "home-link";
   chooseLink.textContent = "Choose a different section";
@@ -1807,6 +1796,17 @@ function renderSection(){
     render();
   };
   card.appendChild(chooseLink);
+
+  const link = document.createElement('div');
+  link.className = "home-link";
+  link.textContent = "Return to home";
+  link.onclick = async () => {
+    collectFieldValues(step);
+    await saveAuthorData(currentAuthor, currentData);
+    currentScreen = "home";
+    render();
+  };
+  card.appendChild(link);
 
   appendMainScreenLink(card);
 
@@ -2159,15 +2159,22 @@ async function buildQrSheetCanvas(canvas, filledKeys){
       try{
         const composite = await buildQrComposite(tpl.src, currentData[key].trim(), tpl.color);
         const img = await loadImageEl(composite);
+
+        // Soft drop shadow behind the tile, instead of a hard outline
+        ctx.save();
+        ctx.shadowColor = "rgba(12,30,61,0.25)";
+        ctx.shadowBlur = 18;
+        ctx.shadowOffsetY = 6;
+        ctx.fillStyle = "#FFFFFF";
+        roundedRectPath(gx, gy, tileW, tileH, tileRadius);
+        ctx.fill();
+        ctx.restore();
+
         ctx.save();
         roundedRectPath(gx, gy, tileW, tileH, tileRadius);
         ctx.clip();
         ctx.drawImage(img, gx, gy, tileW, tileH);
         ctx.restore();
-        ctx.lineWidth = 3;
-        ctx.strokeStyle = "#0C1E3D";
-        roundedRectPath(gx, gy, tileW, tileH, tileRadius);
-        ctx.stroke();
       }catch(e){ /* skip this tile on error, keep going */ }
       gx += tileW + GAP;
     }
