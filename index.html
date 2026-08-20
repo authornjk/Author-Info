@@ -841,6 +841,29 @@ function storageKey(author){ return `bss2027:author:${slug(author)}`; }
 
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx243aXYN1O8ABOO729RyMlgKV68OzKqVtKUqPetqVPwSKQ_5wCjI71_vyEG6y_K66i/exec";
 
+/* window.storage only exists inside Claude's own preview — it's undefined
+   on real hosting (GitHub Pages, etc). Every call site goes through this
+   safe wrapper so a missing window.storage never throws and silently
+   breaks the function that called it — it just quietly does nothing. */
+const localCache = {
+  async get(key, shared){
+    if(typeof window.storage === "undefined") return null;
+    try{ return await window.storage.get(key, shared); }catch(e){ return null; }
+  },
+  async set(key, value, shared){
+    if(typeof window.storage === "undefined") return null;
+    try{ return await window.storage.set(key, value, shared); }catch(e){ return null; }
+  },
+  async delete(key, shared){
+    if(typeof window.storage === "undefined") return null;
+    try{ return await window.storage.delete(key, shared); }catch(e){ return null; }
+  },
+  async list(prefix, shared){
+    if(typeof window.storage === "undefined") return null;
+    try{ return await window.storage.list(prefix, shared); }catch(e){ return null; }
+  }
+};
+
 /* Fire-and-forget push to the Google Sheet backend. */
 function pushToSheet(action, payload){
   try{
@@ -864,35 +887,27 @@ async function loadAuthorData(author){
       headers: { "Content-Type": "text/plain;charset=utf-8" },
       body: JSON.stringify({ action: "getAuthorData", authorName: author })
     });
-    const rawText = await res.text();
-    alert("DEBUG — status: " + res.status + "\n\nRaw response:\n" + rawText.slice(0, 800));
-    const json = JSON.parse(rawText);
+    const json = await res.json();
     if(json && json.success && json.exists){
       const data = { meta: { welcomeSeen: !!json.meta.welcomeSeen, currentStep: json.meta.currentStep || "general-info", generalInfoUpdatedAt:null }, ...json.data };
       if(json.headshotUrl) data.headshotUrl = json.headshotUrl;
       if(json.logoUrl) data.logoUrl = json.logoUrl;
-      window.storage.set(storageKey(author), JSON.stringify(data), true).catch(()=>{});
+      localCache.set(storageKey(author), JSON.stringify(data), true);
       return data;
     }
     if(json && json.success && json.exists === false){
       return freshData();
     }
-  }catch(e){
-    alert("DEBUG — fetch/parse error: " + e.message);
-  }
+  }catch(e){ /* server unreachable — fall back to local cache below */ }
 
-  try{
-    const res = await window.storage.get(storageKey(author), true);
-    return res ? JSON.parse(res.value) : freshData();
-  }catch(e){ return freshData(); }
+  const cached = await localCache.get(storageKey(author), true);
+  return cached ? JSON.parse(cached.value) : freshData();
 }
 function freshData(){
   return { meta:{ welcomeSeen:false, currentStep:"general-info", generalInfoUpdatedAt:null } };
 }
 async function saveAuthorData(author, data){
-  try{
-    await window.storage.set(storageKey(author), JSON.stringify(data), true);
-  }catch(e){ /* local cache is a nice-to-have, not required */ }
+  localCache.set(storageKey(author), JSON.stringify(data), true);
   const { meta, headshotUrl, logoUrl, ...fieldData } = data;
   pushToSheet("saveData", { authorName: author, data: fieldData, meta: meta || {} });
 }
@@ -1019,14 +1034,12 @@ function renderAuthorSelect(){
 async function resetAllData(){
   if(!confirm("This permanently deletes ALL saved answers for every author — in this form, your Google Sheet, and your Drive folders. This can't be undone. Continue?")) return;
   if(!confirm("Really sure? This is your last chance to back out.")) return;
-  try{
-    const listRes = await window.storage.list("bss2027:", true);
-    const keys = (listRes && listRes.keys) ? listRes.keys : [];
-    for(const k of keys){
-      const keyName = typeof k === "string" ? k : k.key;
-      await window.storage.delete(keyName, true);
-    }
-  }catch(e){ /* continue even if local clear partially fails */ }
+  const listRes = await localCache.list("bss2027:", true);
+  const keys = (listRes && listRes.keys) ? listRes.keys : [];
+  for(const k of keys){
+    const keyName = typeof k === "string" ? k : k.key;
+    await localCache.delete(keyName, true);
+  }
   pushToSheet("resetAll", {});
   showToast("All test data cleared!");
 }
@@ -1609,7 +1622,7 @@ function buildFileUpload(f){
       currentData[urlKey] = json.url;
       currentData[f.key + "UploadedAt"] = new Date().toISOString();
       if(currentStepId === "general-info") currentData.meta.generalInfoUpdatedAt = new Date().toISOString();
-      window.storage.set(fileStorageKey(f.key), dataUrl, true).catch(()=>{});
+      localCache.set(fileStorageKey(f.key), dataUrl, true);
       await saveAuthorData(currentAuthor, currentData);
 
       status.textContent = `Uploaded — last updated ${new Date(currentData[f.key + "UploadedAt"]).toLocaleString()}`;
@@ -1618,7 +1631,7 @@ function buildFileUpload(f){
       showToast("Uploaded!");
     }catch(e){
       status.textContent = "Upload didn't go through (" + (e.message || "unknown error") + ") — please try again.";
-      showToast("Upload failed — please try again");
+      showToast((f.label || "File") + " upload failed — please try again");
     }
   });
 
@@ -1632,9 +1645,9 @@ function buildFileUpload(f){
     preview.src = idMatch ? `https://drive.google.com/uc?export=view&id=${idMatch[1]}` : currentData[urlKey];
     preview.style.display = "block";
   } else if(currentData[f.key + "UploadedAt"]){
-    window.storage.get(fileStorageKey(f.key), true).then(res=>{
+    localCache.get(fileStorageKey(f.key), true).then(res=>{
       if(res){ preview.src = res.value; preview.style.display = "block"; }
-    }).catch(()=>{});
+    });
   }
   return box;
 }
