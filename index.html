@@ -864,7 +864,9 @@ async function loadAuthorData(author){
       headers: { "Content-Type": "text/plain;charset=utf-8" },
       body: JSON.stringify({ action: "getAuthorData", authorName: author })
     });
-    const json = await res.json();
+    const rawText = await res.text();
+    alert("DEBUG — status: " + res.status + "\n\nRaw response:\n" + rawText.slice(0, 800));
+    const json = JSON.parse(rawText);
     if(json && json.success && json.exists){
       const data = { meta: { welcomeSeen: !!json.meta.welcomeSeen, currentStep: json.meta.currentStep || "general-info", generalInfoUpdatedAt:null }, ...json.data };
       if(json.headshotUrl) data.headshotUrl = json.headshotUrl;
@@ -875,7 +877,9 @@ async function loadAuthorData(author){
     if(json && json.success && json.exists === false){
       return freshData();
     }
-  }catch(e){ /* server unreachable — fall back to local cache below */ }
+  }catch(e){
+    alert("DEBUG — fetch/parse error: " + e.message);
+  }
 
   try{
     const res = await window.storage.get(storageKey(author), true);
