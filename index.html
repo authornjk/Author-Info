@@ -563,11 +563,21 @@ const STEPS = {
       {key:"linkSpotify", label:"Spotify", type:"url", help:"Leave blank if not applicable."},
       {key:"linkOther", label:"Name and link to anywhere else we've missed", type:"text", help:"Example: Spotify, [link]"}
     ],
-    next: () => "book-signing-plan"
+    validate: () => {
+      const problems = [];
+      STEPS["links"].fields.forEach(f=>{
+        if(f.type !== "url") return;
+        const val = (currentData[f.key]||"").trim();
+        if(!val) return;
+        if(!/^https?:\/\/[^\s]+\.[^\s]{2,}/i.test(val)) problems.push(f.label);
+      });
+      return problems;
+    },
+    next: () => "link-verification"
   },
 
   "book-signing-plan": {
-    title: "The Book Signing", icon: FLOURISH.bookStack,
+    title: "Your Books at the Book Signing", icon: FLOURISH.bookStack,
     sub: "You're welcome to bring books to sell, do a pre-sale, both, or neither — whatever works for you.",
     fields: [
       {key:"bookSigningPlan", label:"You plan to:", type:"radio", required:true, options:[
@@ -580,30 +590,12 @@ const STEPS = {
     ],
     next: (d) => {
       switch(d.bookSigningPlan){
-        case "Bring a selection of books to sell at the event, but NOT have a pre-sale": return "books-no-presale";
+        case "Bring a selection of books to sell at the event, but NOT have a pre-sale": return "books-selling";
         case "ONLY a pre-sale, but NOT bring a selection of books to sell at the event.": return "presale-link";
-        case "Bring a selection of books to sell at the event AND have a pre-sale": return "books-with-presale";
+        case "Bring a selection of books to sell at the event AND have a pre-sale": return "presale-link";
         default: return "swag-prizes";
       }
     }
-  },
-
-  "books-no-presale": {
-    title: "Books at the Soirée, but NO pre-sale", icon: FLOURISH.book,
-    sub: "This list will be available to the attendees, so if you don't know right now, you'll want to get us that info before Feb 1 so we can get the master list ready before tickets go on sale. Attendees will be informed there is no guarantee on the number of copies authors will have, so if they have their heart set on getting a particular book(s) signed, and no pre-order was offered, they should bring their own copy.",
-    fields: [
-      {key:"titlesBringingA", label:"Do you know what titles are you going to have at the Soirée?", type:"textarea"}
-    ],
-    next: () => "swag-prizes"
-  },
-
-  "books-with-presale": {
-    title: "Bring a Selection of Books AND Have a Pre-Sale", icon: FLOURISH.book,
-    sub: "This question is only for books you'll have there to sell — the next section covers your pre-sale.",
-    fields: [
-      {key:"titlesBringingB", label:"What titles are you going to have at the Soirée?", type:"textarea", help:"This list will be available for the attendees, so if you don't know right now, you'll want to get us that info before Feb 1.\n\nAttendees will be informed there is no guarantee on the number of copies authors will have, so if they have their heart set on getting a particular book(s) signed, and no pre-order was offered, they should bring their own copy."}
-    ],
-    next: () => "presale-link"
   },
 
   "presale-link": {
@@ -613,6 +605,17 @@ const STEPS = {
     body: "Whether you're using a Google form, email, or something else, we need a link to where people can preorder books from you.<br><br>If you don't have a link, or don't love the form you have, we have one you can customize and use as you'd like. Click <a href=\"https://forms.gle/3oYiZVmMW4AEPKFt5\" target=\"_blank\" rel=\"noopener\">HERE</a> to look at the form (<em>The form will open in a separate window, and you won't lose your progress here</em>). If you'd like to use that form type \u201cwill use your google form\u201d and we'll send you an editable link.",
     fields: [
       {key:"presaleLink", label:"What link do you want people to use to pre-order books?", type:"url"}
+    ],
+    next: (d) => d.bookSigningPlan === "Bring a selection of books to sell at the event AND have a pre-sale" ? "books-selling" : "swag-prizes"
+  },
+
+  "books-selling": {
+    title: "Books You Are Selling During the Book Signing", icon: FLOURISH.book,
+    sub: (d) => d.bookSigningPlan === "Bring a selection of books to sell at the event AND have a pre-sale"
+      ? "This question is only for books you'll have there to sell — you already gave us your pre-sale link."
+      : "This list will be available to the attendees, so if you don't know right now, you'll want to get us that info before Feb 1 so we can get the master list ready before tickets go on sale.",
+    fields: [
+      {key:"titlesBringing", label:"What titles are you going to have at the Soirée?", type:"textarea", help:"Attendees will be informed there is no guarantee on the number of copies authors will have, so if they have their heart set on getting a particular book(s) signed, and no pre-order was offered, they should bring their own copy."}
     ],
     next: () => "swag-prizes"
   },
@@ -718,8 +721,8 @@ const STEPS = {
   "done": { title:"All Set!", done:true }
 };
 
-const STEP_ORDER = ["general-info","bingo-book","misc-fun","fun-stuff-cont","links",
-  "book-signing-plan","books-no-presale","books-with-presale","presale-link",
+const STEP_ORDER = ["general-info","bingo-book","misc-fun","fun-stuff-cont","links","link-verification",
+  "book-signing-plan","presale-link","books-selling",
   "swag-prizes","donation-knowledge","donation-titles","donation-numbers","dropoff","social-media","final-comments"];
 
 const NAV_MENU = [
@@ -727,8 +730,9 @@ const NAV_MENU = [
   {label:"Your BINGO Book", target:"bingo-book"},
   {label:"Misc fun stuff!", target:"misc-fun"},
   {label:"Links to places readers can find you", target:"links"},
+  {label:"Link Verification", target:"link-verification"},
   {label:"What book are you bringing to the Book Signing", target:"__bringing__"},
-  {label:"All things book signing", target:"books-no-presale"},
+  {label:"All things book signing", target:"book-signing-plan"},
   {label:"Link to your Pre-Sale form", target:"presale-link"},
   {label:"SWAG & Prizes", target:"swag-prizes"},
   {label:"How do I get my SWAG and/or Books to you?", target:"dropoff"}
@@ -923,6 +927,11 @@ function goToSection(id){
   if(currentScreen === "section" && currentStepId){
     stepHistory.push(currentStepId);
   }
+  if(id === "link-verification"){
+    currentScreen = "link-verification";
+    render();
+    return;
+  }
   currentStepId = id;
   currentScreen = "section";
   render();
@@ -967,6 +976,7 @@ function render(){
   else if(currentScreen === "admin") renderAdmin();
   else if(currentScreen === "edit-authors") renderEditAuthors();
   else if(currentScreen === "whats-left") renderWhatsLeft();
+  else if(currentScreen === "link-verification") renderLinkVerification();
   else if(currentScreen === "qr-preview") renderQrPreview();
   else if(currentScreen === "section") renderSection();
   window.scrollTo(0, 0);
@@ -1467,14 +1477,8 @@ function renderLookup(kind){
   let title, content, empty=false;
   if(kind === "bringing"){
     title = "Books You're Bringing to Sell";
-    const plan = currentData.bookSigningPlan;
-    if(plan === "Bring a selection of books to sell at the event, but NOT have a pre-sale"){
-      content = currentData.titlesBringingA;
-    } else if(plan === "Bring a selection of books to sell at the event AND have a pre-sale"){
-      content = currentData.titlesBringingB;
-    } else {
-      empty = true;
-    }
+    content = currentData.titlesBringing;
+    if(!content) empty = true;
   } else {
     title = "Books You're Donating";
     const k = currentData.donationKnowledge;
@@ -1522,9 +1526,9 @@ function renderNavSubmenu(){
       let target = item.target;
       if(target === "__bringing__"){
         const plan = currentData.bookSigningPlan;
-        target = plan === "Bring a selection of books to sell at the event AND have a pre-sale" ? "books-with-presale"
-               : plan === "Bring a selection of books to sell at the event, but NOT have a pre-sale" ? "books-no-presale"
-               : "book-signing-plan";
+        target = (plan === "Bring a selection of books to sell at the event AND have a pre-sale"
+               || plan === "Bring a selection of books to sell at the event, but NOT have a pre-sale")
+               ? "books-selling" : "book-signing-plan";
       }
       goToSection(target);
     };
@@ -1659,6 +1663,7 @@ function renderSection(){
   const card = document.createElement('div');
   card.className = "card";
   const titleImg = step.icon ? `<img src="${step.icon}">` : "";
+  const resolvedSub = typeof step.sub === "function" ? step.sub(currentData) : (step.sub || "");
 
   if(step.sideImage){
     card.innerHTML = `
@@ -1673,7 +1678,7 @@ function renderSection(){
     const txt = document.createElement('div');
     txt.className = "section-sub";
     txt.style.margin = "0";
-    txt.textContent = step.sub || "";
+    txt.textContent = resolvedSub;
     row.appendChild(img);
     row.appendChild(txt);
     card.appendChild(row);
@@ -1681,7 +1686,7 @@ function renderSection(){
     card.innerHTML = `
       <div class="eyebrow">Bookish Summer Soirée</div>
       <h1 class="section-title">${titleImg}${step.title}</h1>
-      <div class="section-sub">${step.sub || ""}</div>
+      <div class="section-sub">${resolvedSub}</div>
     `;
   }
 
@@ -1692,6 +1697,15 @@ function renderSection(){
     div.style.height = "20px";
     div.style.margin = "-6px auto 20px";
     card.appendChild(div);
+  }
+
+  if(sectionValidationMessage){
+    const errBox = document.createElement('div');
+    errBox.className = "info-box";
+    errBox.style.borderLeftColor = "var(--terracotta)";
+    errBox.textContent = sectionValidationMessage;
+    card.appendChild(errBox);
+    sectionValidationMessage = null;
   }
 
   if(step.info){
@@ -1770,6 +1784,15 @@ function renderSection(){
   saveExit.textContent = "Save & return home";
   saveExit.onclick = async () => {
     collectFieldValues(step);
+    if(step.validate){
+      const problems = step.validate();
+      if(problems.length){
+        sectionValidationMessage = `The web address you entered for ${problems.join(", ")} doesn't seem to be an actual website. Can you please re-enter that website address${problems.length>1?"es":""}?`;
+        render();
+        return;
+      }
+    }
+    sectionValidationMessage = null;
     await saveAuthorData(currentAuthor, currentData);
     showToast("Saved!");
     if(currentStepId === "links"){
@@ -2028,6 +2051,153 @@ async function generateAndUploadQrCodes(authorName, data){
 }
 
 /* ---------- SCREEN: QR SHEET PREVIEW ---------- */
+/* ---------- SCREEN: LINK VERIFICATION ---------- */
+let linkVerifyState = {};
+
+function renderLinkVerification(){
+  app.appendChild(logoLockup());
+  const card = document.createElement('div');
+  card.className = "card";
+  card.innerHTML = `
+    <div class="eyebrow">Bookish Summer Soirée</div>
+    <h1 class="section-title">Link Verification</h1>
+    <div class="section-sub">Let's make sure all those links go where you want them to.</div>
+  `;
+
+  const filledKeys = Object.keys(QR_TEMPLATES).filter(k => currentData[k] && currentData[k].trim());
+  filledKeys.forEach(k => { if(!linkVerifyState[k]) linkVerifyState[k] = "unverified"; });
+
+  if(filledKeys.length === 0){
+    const empty = document.createElement('div');
+    empty.className = "info-box";
+    empty.textContent = "You didn't save any links, so there's nothing to verify here.";
+    card.appendChild(empty);
+  } else {
+    const intro = document.createElement('div');
+    intro.className = "info-box";
+    intro.textContent = "Tap any link below — it'll open in a new tab. Take a look, then hop back here and let us know if it's right.";
+    card.appendChild(intro);
+
+    filledKeys.forEach(key=>{
+      const tpl = QR_TEMPLATES[key];
+      const state = linkVerifyState[key];
+      const row = document.createElement('div');
+      row.className = "dropoff-card";
+      row.style.boxShadow = "none";
+
+      const label = document.createElement('div');
+      label.className = "who";
+      label.textContent = tpl.label;
+      row.appendChild(label);
+
+      if(state === "fixing"){
+        const input = document.createElement('input');
+        input.type = "text";
+        input.value = currentData[key];
+        input.style.marginTop = "8px";
+        row.appendChild(input);
+        const saveRow = document.createElement('div');
+        saveRow.className = "btn-row";
+        saveRow.style.marginTop = "10px";
+        const saveBtn = document.createElement('button');
+        saveBtn.className = "btn btn-primary btn-tiny";
+        saveBtn.textContent = "Save & re-check";
+        saveBtn.onclick = async () => {
+          const val = input.value.trim();
+          if(!/^https?:\/\/[^\s]+\.[^\s]{2,}/i.test(val)){
+            alert(`That doesn't look like a real website address yet — please include "https://" and try again.`);
+            return;
+          }
+          currentData[key] = val;
+          linkVerifyState[key] = "unverified";
+          await saveAuthorData(currentAuthor, currentData);
+          generateAndUploadQrCodes(currentAuthor, currentData);
+          render();
+        };
+        saveRow.appendChild(saveBtn);
+        row.appendChild(saveRow);
+      } else {
+        const linkEl = document.createElement('a');
+        linkEl.href = currentData[key];
+        linkEl.target = "_blank";
+        linkEl.rel = "noopener";
+        linkEl.textContent = currentData[key];
+        linkEl.style.cssText = "display:block;margin-top:4px;color:var(--terracotta);word-break:break-all;font-family:'Montserrat',sans-serif;font-size:13px;";
+        row.appendChild(linkEl);
+
+        if(state === "verified"){
+          const badge = document.createElement('div');
+          badge.style.cssText = "margin-top:8px;font-family:'Montserrat',sans-serif;font-weight:700;font-size:12.5px;color:var(--sage);";
+          badge.textContent = "✓ VERIFIED";
+          row.appendChild(badge);
+        } else {
+          const btnRow2 = document.createElement('div');
+          btnRow2.className = "btn-row";
+          btnRow2.style.marginTop = "10px";
+          const rightBtn = document.createElement('button');
+          rightBtn.className = "btn btn-primary btn-tiny";
+          rightBtn.textContent = "IT'S RIGHT";
+          rightBtn.onclick = () => { linkVerifyState[key] = "verified"; render(); };
+          const fixBtn = document.createElement('button');
+          fixBtn.className = "btn btn-secondary btn-tiny";
+          fixBtn.textContent = "LET'S FIX IT";
+          fixBtn.onclick = () => { linkVerifyState[key] = "fixing"; render(); };
+          btnRow2.appendChild(rightBtn);
+          btnRow2.appendChild(fixBtn);
+          row.appendChild(btnRow2);
+        }
+      }
+      card.appendChild(row);
+    });
+  }
+
+  const allVerified = filledKeys.every(k => linkVerifyState[k] === "verified");
+
+  const btnRow = document.createElement('div');
+  btnRow.className = "btn-row";
+  btnRow.style.marginTop = "20px";
+  const continueBtn = document.createElement('button');
+  continueBtn.className = "btn btn-primary";
+  continueBtn.textContent = "Continue";
+  continueBtn.disabled = !allVerified;
+  continueBtn.style.opacity = allVerified ? "1" : "0.5";
+  continueBtn.onclick = () => {
+    if(!allVerified) return;
+    linkVerifyState = {};
+    goToSection("book-signing-plan");
+  };
+  btnRow.appendChild(continueBtn);
+  card.appendChild(btnRow);
+  if(!allVerified && filledKeys.length > 0){
+    const note = document.createElement('div');
+    note.className = "help";
+    note.style.marginTop = "8px";
+    note.textContent = "Verify every link above to continue.";
+    card.appendChild(note);
+  }
+
+  const backLink = document.createElement('div');
+  backLink.className = "home-link";
+  backLink.textContent = "Back to Links";
+  backLink.onclick = () => { currentScreen = "section"; currentStepId = "links"; render(); };
+  card.appendChild(backLink);
+
+  const homeLink = document.createElement('div');
+  homeLink.className = "home-link";
+  homeLink.textContent = "Save & return home";
+  homeLink.onclick = async () => {
+    await saveAuthorData(currentAuthor, currentData);
+    showToast("Saved!");
+    currentScreen = "home";
+    render();
+  };
+  card.appendChild(homeLink);
+  appendMainScreenLink(card);
+
+  app.appendChild(card);
+}
+
+
 function renderQrPreview(){
   app.appendChild(logoLockup());
   const card = document.createElement('div');
@@ -2200,8 +2370,19 @@ function collectFieldValues(step){
   }
 }
 
+let sectionValidationMessage = null;
+
 async function advanceStep(step){
   collectFieldValues(step);
+  if(step.validate){
+    const problems = step.validate();
+    if(problems.length){
+      sectionValidationMessage = `The web address you entered for ${problems.join(", ")} doesn't seem to be an actual website. Can you please re-enter that website address${problems.length>1?"es":""}?`;
+      render();
+      return;
+    }
+  }
+  sectionValidationMessage = null;
   const nextId = step.next ? step.next(currentData) : "done";
   currentData.meta.currentStep = nextId;
   await saveAuthorData(currentAuthor, currentData);
