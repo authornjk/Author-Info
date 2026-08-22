@@ -281,6 +281,88 @@
   .info-box a{ color:var(--terracotta); font-weight:600; text-decoration:underline; }
   .info-box strong{ color:var(--terracotta); }
 
+  /* ---------- Checklist (What Else Do I Need To Do?) ---------- */
+  .checklist-summary{
+    font-family:'Montserrat',sans-serif;
+    font-size:13.5px;
+    font-weight:600;
+    color:var(--navy);
+    background:var(--cream);
+    border-radius:10px;
+    padding:14px 16px;
+    margin-bottom:22px;
+    line-height:1.6;
+  }
+  .checklist-summary .count{ color:var(--terracotta); }
+  .checklist-section{ margin-top:26px; }
+  .checklist-section:first-of-type{ margin-top:4px; }
+  .checklist-section-title{
+    font-family:'Montserrat',sans-serif;
+    font-weight:700;
+    font-size:13.5px;
+    letter-spacing:.03em;
+    color:var(--terracotta);
+    margin-bottom:8px;
+    display:flex;
+    align-items:baseline;
+    gap:6px;
+  }
+  .checklist-section-title .note{
+    font-weight:500;
+    font-size:11.5px;
+    color:var(--navy);
+    opacity:.55;
+    text-transform:none;
+    letter-spacing:0;
+  }
+  .checklist-row{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:10px 2px;
+    border-bottom:1px solid rgba(12,30,61,0.08);
+    transition:opacity .12s ease;
+  }
+  .checklist-row:last-child{ border-bottom:none; }
+  .checklist-row.done{ opacity:.55; }
+  .checklist-row.declined{ opacity:.6; }
+  .checklist-icon{
+    flex-shrink:0;
+    width:20px; height:20px;
+    border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:12px; font-weight:700; line-height:1;
+  }
+  .checklist-icon.done{ background:var(--sage); color:#fff; }
+  .checklist-icon.declined{ background:var(--peach); color:var(--terracotta); }
+  .checklist-icon.todo{ background:transparent; border:1.5px solid rgba(12,30,61,0.2); }
+  .checklist-label{
+    flex:1;
+    font-family:'Lora',serif;
+    font-size:14.5px;
+    color:var(--navy);
+  }
+  .checklist-label .preview{ opacity:.6; font-style:italic; }
+  .checklist-add-btn, .checklist-edit-btn{
+    flex-shrink:0;
+    font-family:'Montserrat',sans-serif;
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:.03em;
+    border-radius:999px;
+    padding:6px 14px;
+    cursor:pointer;
+    border:1.5px solid var(--terracotta);
+    background:transparent;
+    color:var(--terracotta);
+    transition:all .12s ease;
+  }
+  @media (hover: hover){
+    .checklist-add-btn:hover, .checklist-edit-btn:hover{ background:var(--terracotta); color:#fff; }
+  }
+  .checklist-edit-btn{ border-color:var(--sage); color:var(--sage); }
+  @media (hover: hover){ .checklist-edit-btn:hover{ background:var(--sage); color:#fff; } }
+
   .save-prompt{
     font-family:'Playfair Display', serif;
     font-style:italic;
@@ -563,21 +645,11 @@ const STEPS = {
       {key:"linkSpotify", label:"Spotify", type:"url", help:"Leave blank if not applicable."},
       {key:"linkOther", label:"Name and link to anywhere else we've missed", type:"text", help:"Example: Spotify, [link]"}
     ],
-    validate: () => {
-      const problems = [];
-      STEPS["links"].fields.forEach(f=>{
-        if(f.type !== "url") return;
-        const val = (currentData[f.key]||"").trim();
-        if(!val) return;
-        if(!/^https?:\/\/[^\s]+\.[^\s]{2,}/i.test(val)) problems.push(f.label);
-      });
-      return problems;
-    },
-    next: () => "link-verification"
+    next: () => "book-signing-plan"
   },
 
   "book-signing-plan": {
-    title: "Your Books at the Book Signing", icon: FLOURISH.bookStack,
+    title: "The Book Signing", icon: FLOURISH.bookStack,
     sub: "You're welcome to bring books to sell, do a pre-sale, both, or neither — whatever works for you.",
     fields: [
       {key:"bookSigningPlan", label:"You plan to:", type:"radio", required:true, options:[
@@ -590,12 +662,30 @@ const STEPS = {
     ],
     next: (d) => {
       switch(d.bookSigningPlan){
-        case "Bring a selection of books to sell at the event, but NOT have a pre-sale": return "books-selling";
+        case "Bring a selection of books to sell at the event, but NOT have a pre-sale": return "books-no-presale";
         case "ONLY a pre-sale, but NOT bring a selection of books to sell at the event.": return "presale-link";
-        case "Bring a selection of books to sell at the event AND have a pre-sale": return "presale-link";
+        case "Bring a selection of books to sell at the event AND have a pre-sale": return "books-with-presale";
         default: return "swag-prizes";
       }
     }
+  },
+
+  "books-no-presale": {
+    title: "Books at the Soirée, but NO pre-sale", icon: FLOURISH.book,
+    sub: "This list will be available to the attendees, so if you don't know right now, you'll want to get us that info before Feb 1 so we can get the master list ready before tickets go on sale. Attendees will be informed there is no guarantee on the number of copies authors will have, so if they have their heart set on getting a particular book(s) signed, and no pre-order was offered, they should bring their own copy.",
+    fields: [
+      {key:"titlesBringingA", label:"Do you know what titles are you going to have at the Soirée?", type:"textarea"}
+    ],
+    next: () => "swag-prizes"
+  },
+
+  "books-with-presale": {
+    title: "Bring a Selection of Books AND Have a Pre-Sale", icon: FLOURISH.book,
+    sub: "This question is only for books you'll have there to sell — the next section covers your pre-sale.",
+    fields: [
+      {key:"titlesBringingB", label:"What titles are you going to have at the Soirée?", type:"textarea", help:"This list will be available for the attendees, so if you don't know right now, you'll want to get us that info before Feb 1.\n\nAttendees will be informed there is no guarantee on the number of copies authors will have, so if they have their heart set on getting a particular book(s) signed, and no pre-order was offered, they should bring their own copy."}
+    ],
+    next: () => "presale-link"
   },
 
   "presale-link": {
@@ -606,22 +696,11 @@ const STEPS = {
     fields: [
       {key:"presaleLink", label:"What link do you want people to use to pre-order books?", type:"url"}
     ],
-    next: (d) => d.bookSigningPlan === "Bring a selection of books to sell at the event AND have a pre-sale" ? "books-selling" : "swag-prizes"
-  },
-
-  "books-selling": {
-    title: "Books You Are Selling During the Book Signing", icon: FLOURISH.book,
-    sub: (d) => d.bookSigningPlan === "Bring a selection of books to sell at the event AND have a pre-sale"
-      ? "This question is only for books you'll have there to sell — you already gave us your pre-sale link."
-      : "This list will be available to the attendees, so if you don't know right now, you'll want to get us that info before Feb 1 so we can get the master list ready before tickets go on sale.",
-    fields: [
-      {key:"titlesBringing", label:"What titles are you going to have at the Soirée?", type:"textarea", help:"Attendees will be informed there is no guarantee on the number of copies authors will have, so if they have their heart set on getting a particular book(s) signed, and no pre-order was offered, they should bring their own copy."}
-    ],
     next: () => "swag-prizes"
   },
 
   "swag-prizes": {
-    title: "Swag Bags & Prizes", icon: FLOURISH.heart,
+    title: "Swag & Prizes", icon: FLOURISH.heart,
     sub: "Here's where you tell us what you're up for.",
     info: true,
     body: `<strong>SWAG BAGS:</strong><br>
@@ -638,7 +717,7 @@ const STEPS = {
       {key:"swagPrizePlan", label:"", type:"radio", required:true, options:[
         "I would LOVE to add some of my swag to the totes AND donate book(s) for prizes!",
         "I would LOVE to add some of my swag to the totes, but I'll PASS on donating books for prizes.",
-        "I will PASS on adding swag to the totes, but I'd LOVE to donate book(s) for prizes!",
+        "I would LOVE to donate book(s) for prizes, but I'll PASS on adding swag to the totes.",
         "I will PASS on adding swag or donating book(s)."
       ]}
     ],
@@ -673,7 +752,7 @@ const STEPS = {
     title: "Donated Book Title(s)", icon: FLOURISH.book,
     sub: "YOU'RE A ROCKSTAR! Thank you, thank you, thank you!",
     fields: [
-      {key:"donatedTitles", label:"This is what I am planning on donating:", type:"textarea", help:"It's great for the organization part of my brain to be able to add a title to the spreadsheet!\nI'm counting PRIZES, not books — so five copies of the same book would be considered five prizes. Since I'd keep a series together, a five book series would count as one prize.\nHere are examples of how you might list things:\n\u2022 I'll do XX copies of [book name], and XX copies of [book name], and XX copies of the XX series\n\u2022 I'll do XX copies of the [book series]\n\u2022 I'll do XX copies of [book name]"}
+      {key:"donatedTitles", label:"This is what I am planning on donating:", type:"textarea", help:"Well done at knowing what you're doing right away! It's the number of prizes that's the most important at this point\u2014but it's nice for the organization part of my brain to be able to add a title to the spreadsheet too.\n\nI'm counting PRIZES, not books — so five copies of the same book would be considered five prizes. Since I'd keep a series together, a five book series would count as one prize.\n\nHere are examples of how you might list things:\n\u2022 I'll do XX copies of [book name], and XX copies of [book name], and XX copies of the XX series\n\u2022 I'll do XX copies of the [book series]\n\u2022 I'll do XX copies of [book name]"}
     ],
     next: () => "dropoff"
   },
@@ -721,8 +800,8 @@ const STEPS = {
   "done": { title:"All Set!", done:true }
 };
 
-const STEP_ORDER = ["general-info","bingo-book","misc-fun","fun-stuff-cont","links","link-verification",
-  "book-signing-plan","presale-link","books-selling",
+const STEP_ORDER = ["general-info","bingo-book","misc-fun","fun-stuff-cont","links",
+  "book-signing-plan","books-no-presale","books-with-presale","presale-link",
   "swag-prizes","donation-knowledge","donation-titles","donation-numbers","dropoff","social-media","final-comments"];
 
 const NAV_MENU = [
@@ -730,9 +809,8 @@ const NAV_MENU = [
   {label:"Your BINGO Book", target:"bingo-book"},
   {label:"Misc fun stuff!", target:"misc-fun"},
   {label:"Links to places readers can find you", target:"links"},
-  {label:"Link Verification", target:"link-verification"},
   {label:"What book are you bringing to the Book Signing", target:"__bringing__"},
-  {label:"All things book signing", target:"book-signing-plan"},
+  {label:"All things book signing", target:"books-no-presale"},
   {label:"Link to your Pre-Sale form", target:"presale-link"},
   {label:"SWAG & Prizes", target:"swag-prizes"},
   {label:"How do I get my SWAG and/or Books to you?", target:"dropoff"}
@@ -922,15 +1000,16 @@ let currentData = null;
 let currentScreen = "author-select";
 let currentStepId = null;
 let stepHistory = [];
+let cameFromWhatsLeft = false;
+
+function goToSectionFromChecklist(id){
+  cameFromWhatsLeft = true;
+  goToSection(id);
+}
 
 function goToSection(id){
   if(currentScreen === "section" && currentStepId){
     stepHistory.push(currentStepId);
-  }
-  if(id === "link-verification"){
-    currentScreen = "link-verification";
-    render();
-    return;
   }
   currentStepId = id;
   currentScreen = "section";
@@ -976,7 +1055,6 @@ function render(){
   else if(currentScreen === "admin") renderAdmin();
   else if(currentScreen === "edit-authors") renderEditAuthors();
   else if(currentScreen === "whats-left") renderWhatsLeft();
-  else if(currentScreen === "link-verification") renderLinkVerification();
   else if(currentScreen === "qr-preview") renderQrPreview();
   else if(currentScreen === "section") renderSection();
   window.scrollTo(0, 0);
@@ -1342,6 +1420,7 @@ function renderWelcome(returning){
 /* ---------- SCREEN: HOME ---------- */
 function renderHome(){
   stepHistory = [];
+  cameFromWhatsLeft = false;
   app.appendChild(logoLockup());
   const card = document.createElement('div');
   card.className = "card";
@@ -1361,7 +1440,7 @@ function renderHome(){
     {label:"Go to a specific section", action: () => { currentScreen="nav-submenu"; render(); }},
     {label:"Download Soirée graphics", action: () => { currentScreen="graphics"; render(); }},
     {label:"Preview my QR code sheet", action: () => { currentScreen="qr-preview"; render(); }},
-    {label:"What else do I need to do?", action: () => { currentScreen="whats-left"; render(); }},
+    {label:"My To-Do List", action: () => { currentScreen="whats-left"; render(); }},
   ];
   items.forEach(it=>{
     const b = document.createElement('div');
@@ -1404,61 +1483,250 @@ function renderDates(){
 
 /* ---------- SCREEN: LOOKUPS ---------- */
 /* ---------- SCREEN: WHAT ELSE DO I NEED TO DO? ---------- */
-function computeWhatsLeft(){
-  const results = [];
-  let stepId = "general-info";
-  const visited = new Set();
-  while(stepId && stepId !== "done" && !visited.has(stepId)){
-    visited.add(stepId);
-    const step = STEPS[stepId];
-    if(!step) break;
-    if(step.fields && step.fields.length){
-      const hasRequired = step.fields.some(f => f.required);
-      const missingRequired = step.fields.some(f => {
-        if(!f.required) return false;
-        if(f.type === "file") return !currentData[f.key + "UploadedAt"];
-        return !currentData[f.key];
-      });
-      const anyFilled = step.fields.some(f => f.type === "file" ? currentData[f.key + "UploadedAt"] : currentData[f.key]);
-      if(missingRequired){
-        results.push({ stepId, title: step.title, optional: false });
-      } else if(!hasRequired && !anyFilled){
-        results.push({ stepId, title: step.title, optional: true });
+function isFieldFilled(key, type){
+  if(type === "file") return !!currentData[key + "UploadedAt"];
+  const v = currentData[key];
+  return v !== undefined && v !== null && String(v).trim() !== "";
+}
+
+function truncatePreview(str, max){
+  if(!str) return "";
+  str = String(str).trim();
+  return str.length > max ? str.slice(0, max).trim() + "\u2026" : str;
+}
+
+/* Builds the full checklist model: an array of sections, each with a
+   title, an optional note, and a list of rows describing one task each. */
+function computeChecklist(){
+  const sections = [];
+  const d = currentData;
+
+  // ---- General Info ----
+  sections.push({
+    title: "General Info",
+    rows: [
+      {label:"Full name", done:isFieldFilled("fullName"), required:true, target:"general-info"},
+      {label:"Email address", done:isFieldFilled("email"), required:true, target:"general-info"},
+      {label:"Instagram profile name", done:isFieldFilled("instagram"), required:true, target:"general-info"},
+      {label:"Bio", done:isFieldFilled("bio"), required:true, target:"general-info"},
+      {label:"Headshot", done:isFieldFilled("headshot","file"), required:false, target:"general-info"},
+      {label:"Your logo", done:isFieldFilled("logo","file"), required:false, optionalTag:true, target:"general-info"},
+    ]
+  });
+
+  // ---- BINGO Book ----
+  sections.push({
+    title: "Your BINGO Book",
+    rows: [
+      {label:"BINGO square book", preview: isFieldFilled("bingoBook") ? truncatePreview(d.bingoBook, 60) : null,
+       done:isFieldFilled("bingoBook"), required:true, target:"bingo-book", showEditWhenDone:true}
+    ]
+  });
+
+  // ---- Misc Fun Stuff! (all optional) ----
+  sections.push({
+    title: "Misc Fun Stuff!",
+    note: "(all optional)",
+    rows: [
+      {label:"Fav drink", done:isFieldFilled("drink"), required:false, target:"misc-fun"},
+      {label:"Number of books written", done:isFieldFilled("booksWritten"), required:false, target:"misc-fun"},
+      {label:"Book that lives rent free in your head", done:isFieldFilled("rentFreeBook"), required:false, target:"misc-fun"},
+      {label:"Cheesy musical about your life", done:isFieldFilled("musicalTitle"), required:false, target:"misc-fun"},
+      {label:"Number between 1\u2013100", done:isFieldFilled("numberGuess"), required:false, target:"misc-fun"},
+      {label:"Heroine in any book", done:isFieldFilled("heroineBook"), required:false, target:"misc-fun"},
+      {label:"Reading for pleasure", done:isFieldFilled("readingFormat"), required:false, target:"misc-fun"},
+      {label:"Entry song", done:isFieldFilled("sportsSong"), required:false, target:"misc-fun"},
+    ]
+  });
+
+  // ---- Links (optional, shared with all attendees) ----
+  const linkFields = [
+    ["linkWebsite","Website"], ["linkInstagram","Instagram"], ["linkFacebook","Facebook"],
+    ["linkCatalogue","Book Catalogue"], ["linkNewsletter","Newsletter"], ["linkTiktok","TikTok"],
+    ["linkThreads","Threads"], ["linkEtsy","Etsy"], ["linkPodcast","Podcast"],
+    ["linkYoutube","YouTube"], ["linkBookbub","BookBub"], ["linkSpotify","Spotify"], ["linkOther","Other"]
+  ];
+  sections.push({
+    title: "Links",
+    note: "(optional \u2014 shared with all attendees)",
+    rows: linkFields.map(([key,label]) => ({ label, done:isFieldFilled(key), required:false, target:"links" }))
+  });
+
+  // ---- Your Books at the Book Signing ----
+  const planLabels = {
+    "Bring a selection of books to sell at the event AND have a pre-sale":"Selling books & doing a pre-sale",
+    "Bring a selection of books to sell at the event, but NOT have a pre-sale":"Selling books, no pre-sale",
+    "ONLY a pre-sale, but NOT bring a selection of books to sell at the event.":"Pre-sale only",
+    "I won't sell books at the Soirée, OR have a pre-sale":"Not selling or pre-selling",
+    "Haven't decided yet":"Haven't decided yet"
+  };
+  sections.push({
+    title: "Your Books at the Book Signing",
+    rows: [
+      {label:"Your plan", preview: d.bookSigningPlan ? (planLabels[d.bookSigningPlan] || truncatePreview(d.bookSigningPlan,50)) : null,
+       done:isFieldFilled("bookSigningPlan"), required:true, target:"book-signing-plan"}
+    ]
+  });
+
+  // ---- Pre-sale Book Link (only if relevant to their plan) ----
+  const plan = d.bookSigningPlan;
+  const wantsPresale = plan === "Bring a selection of books to sell at the event AND have a pre-sale" || plan === "ONLY a pre-sale, but NOT bring a selection of books to sell at the event.";
+  const declinedPresale = plan === "Bring a selection of books to sell at the event, but NOT have a pre-sale" || plan === "I won't sell books at the Soirée, OR have a pre-sale";
+  if(wantsPresale || declinedPresale){
+    sections.push({
+      title: "Pre-sale Book Link",
+      rows: [
+        declinedPresale
+          ? {label:"Pre-sale link", done:false, declined:true, declinedText:"You chose no pre-sale"}
+          : {label:"Pre-sale link", done:isFieldFilled("presaleLink"), required:false, target:"presale-link"}
+      ]
+    });
+  }
+
+  // ---- Books You're Selling at the Soirée (only if their plan includes selling) ----
+  const sellsBooks = plan === "Bring a selection of books to sell at the event AND have a pre-sale" || plan === "Bring a selection of books to sell at the event, but NOT have a pre-sale";
+  if(sellsBooks){
+    const key = plan === "Bring a selection of books to sell at the event AND have a pre-sale" ? "titlesBringingB" : "titlesBringingA";
+    const target = key === "titlesBringingB" ? "books-with-presale" : "books-no-presale";
+    sections.push({
+      title: "Books You're Selling at the Soirée",
+      rows: [
+        {label:"Titles list", done:isFieldFilled(key), required:false, target, showEditWhenDone:true, addLabel:"None listed"}
+      ]
+    });
+  }
+
+  // ---- Swag & Prizes ----
+  sections.push({
+    title: "Swag & Prizes",
+    rows: [
+      {label:"Your swag & prizes choice", done:isFieldFilled("swagPrizePlan"), required:true, target:"swag-prizes", addLabel:"Need to select"}
+    ]
+  });
+
+  // ---- Donated Books (only if they opted in) ----
+  const wantsDonate = d.swagPrizePlan === "I would LOVE to add some of my swag to the totes AND donate book(s) for prizes!" || d.swagPrizePlan === "I would LOVE to donate book(s) for prizes, but I'll PASS on adding swag to the totes.";
+  const declinedDonate = d.swagPrizePlan === "I would LOVE to add some of my swag to the totes, but I'll PASS on donating books for prizes." || d.swagPrizePlan === "I will PASS on adding swag or donating book(s).";
+  if(wantsDonate || declinedDonate){
+    let row;
+    if(declinedDonate){
+      row = {label:"Donated books", done:false, declined:true, declinedText:"You chose to not donate books for prizes"};
+    } else {
+      const hasTitles = isFieldFilled("donatedTitles");
+      const hasCount = isFieldFilled("donatedCount");
+      if(hasTitles || hasCount){
+        row = {label:"Donated books", done:true, required:false, target: hasTitles ? "donation-titles" : "donation-numbers", showEditWhenDone:true};
+      } else {
+        row = {label:"Donated books", done:false, required:false, target:"donation-knowledge", addLabel:"Have not added"};
       }
     }
-    stepId = step.next ? step.next(currentData) : null;
+    sections.push({ title:"Donated Books", rows:[row] });
   }
-  return results;
+
+  // ---- Drop-off method (only relevant once swag/prizes has been decided) ----
+  const dropoffRelevant = d.swagPrizePlan && d.swagPrizePlan !== "I will PASS on adding swag or donating book(s).";
+  if(dropoffRelevant){
+    sections.push({
+      title: "How Do I Get My Books & SWAG to You?",
+      rows: [
+        {label:"Drop-off / mailing method", done:isFieldFilled("dropoffMethod"), required:true, target:"dropoff", addLabel:"Need to select"}
+      ]
+    });
+  }
+
+  return sections;
+}
+
+function renderChecklistRow(container, row){
+  const el = document.createElement('div');
+  el.className = "checklist-row" + (row.done ? " done" : "") + (row.declined ? " declined" : "");
+
+  const left = document.createElement('div');
+  left.style.cssText = "display:flex;align-items:center;gap:12px;flex:1;min-width:0;";
+
+  const icon = document.createElement('span');
+  icon.className = "checklist-icon " + (row.done ? "done" : row.declined ? "declined" : "todo");
+  icon.textContent = row.done ? "\u2713" : row.declined ? "\u2715" : "";
+  left.appendChild(icon);
+
+  const labelWrap = document.createElement('span');
+  labelWrap.className = "checklist-label";
+  const labelSpan = document.createElement('span');
+  labelSpan.textContent = row.label;
+  labelWrap.appendChild(labelSpan);
+  if(row.preview){
+    const prev = document.createElement('span');
+    prev.className = "preview";
+    prev.textContent = "  \u2014 " + row.preview;
+    labelWrap.appendChild(prev);
+  }
+  if(row.declined && row.declinedText){
+    const prev = document.createElement('span');
+    prev.className = "preview";
+    prev.textContent = "  \u2014 " + row.declinedText;
+    labelWrap.appendChild(prev);
+  }
+  left.appendChild(labelWrap);
+  el.appendChild(left);
+
+  if(!row.done && !row.declined && row.target){
+    const btn = document.createElement('button');
+    btn.className = "checklist-add-btn";
+    btn.textContent = row.addLabel || "Add";
+    btn.onclick = (e) => { e.stopPropagation(); goToSectionFromChecklist(row.target); };
+    el.appendChild(btn);
+    el.style.cursor = "pointer";
+    el.onclick = () => goToSectionFromChecklist(row.target);
+  } else if(row.done && row.showEditWhenDone && row.target){
+    const btn = document.createElement('button');
+    btn.className = "checklist-edit-btn";
+    btn.textContent = "Edit";
+    btn.onclick = (e) => { e.stopPropagation(); goToSectionFromChecklist(row.target); };
+    el.appendChild(btn);
+    el.style.cursor = "pointer";
+    el.onclick = () => goToSectionFromChecklist(row.target);
+  } else if(row.done && row.target){
+    el.style.cursor = "pointer";
+    el.onclick = () => goToSectionFromChecklist(row.target);
+  }
+
+  container.appendChild(el);
 }
 
 function renderWhatsLeft(){
+  cameFromWhatsLeft = false;
   app.appendChild(logoLockup());
   const card = document.createElement('div');
   card.className = "card";
   card.innerHTML = `
     <div class="eyebrow">Quick Check</div>
-    <h1 class="section-title">What Else Do I Need to Do?</h1>
-    <div class="section-sub">Based on your answers so far. Tap any item to go straight there.</div>
+    <h1 class="section-title">My To-Do List</h1>
+    <div class="section-sub">Tap "Add" (or any row) to jump straight there. Everything not marked required is optional.</div>
   `;
 
-  const items = computeWhatsLeft();
-  if(items.length === 0){
-    const done = document.createElement('div');
-    done.className = "info-box";
-    done.textContent = "You're all caught up! Nothing left to fill in.";
-    card.appendChild(done);
-  } else {
-    const menu = document.createElement('div');
-    menu.className = "menu-list";
-    items.forEach(item=>{
-      const b = document.createElement('div');
-      b.className = "menu-item";
-      b.innerHTML = `<span>${item.title}${item.optional ? ' <span style="opacity:.55;font-weight:500;">(optional)</span>' : ''}</span><span class="arrow">&rarr;</span>`;
-      b.onclick = () => goToSection(item.stepId);
-      menu.appendChild(b);
-    });
-    card.appendChild(menu);
-  }
+  const sections = computeChecklist();
+
+  // Required-tasks summary, counted only from rows actually shown below.
+  let requiredTotal = 0, requiredDone = 0;
+  sections.forEach(s => s.rows.forEach(r => {
+    if(r.required){ requiredTotal++; if(r.done) requiredDone++; }
+  }));
+  const summary = document.createElement('div');
+  summary.className = "checklist-summary";
+  summary.innerHTML = `You've completed <span class="count">${requiredDone} of ${requiredTotal}</span> required tasks. Everything else on this list is optional.`;
+  card.appendChild(summary);
+
+  sections.forEach(section => {
+    if(!section.rows.length) return;
+    const wrap = document.createElement('div');
+    wrap.className = "checklist-section";
+    const title = document.createElement('div');
+    title.className = "checklist-section-title";
+    title.innerHTML = `<span>${section.title}</span>` + (section.note ? `<span class="note">${section.note}</span>` : "");
+    wrap.appendChild(title);
+    section.rows.forEach(row => renderChecklistRow(wrap, row));
+    card.appendChild(wrap);
+  });
 
   const link = document.createElement('div');
   link.className = "home-link";
@@ -1477,8 +1745,14 @@ function renderLookup(kind){
   let title, content, empty=false;
   if(kind === "bringing"){
     title = "Books You're Bringing to Sell";
-    content = currentData.titlesBringing;
-    if(!content) empty = true;
+    const plan = currentData.bookSigningPlan;
+    if(plan === "Bring a selection of books to sell at the event, but NOT have a pre-sale"){
+      content = currentData.titlesBringingA;
+    } else if(plan === "Bring a selection of books to sell at the event AND have a pre-sale"){
+      content = currentData.titlesBringingB;
+    } else {
+      empty = true;
+    }
   } else {
     title = "Books You're Donating";
     const k = currentData.donationKnowledge;
@@ -1526,9 +1800,9 @@ function renderNavSubmenu(){
       let target = item.target;
       if(target === "__bringing__"){
         const plan = currentData.bookSigningPlan;
-        target = (plan === "Bring a selection of books to sell at the event AND have a pre-sale"
-               || plan === "Bring a selection of books to sell at the event, but NOT have a pre-sale")
-               ? "books-selling" : "book-signing-plan";
+        target = plan === "Bring a selection of books to sell at the event AND have a pre-sale" ? "books-with-presale"
+               : plan === "Bring a selection of books to sell at the event, but NOT have a pre-sale" ? "books-no-presale"
+               : "book-signing-plan";
       }
       goToSection(target);
     };
@@ -1663,7 +1937,6 @@ function renderSection(){
   const card = document.createElement('div');
   card.className = "card";
   const titleImg = step.icon ? `<img src="${step.icon}">` : "";
-  const resolvedSub = typeof step.sub === "function" ? step.sub(currentData) : (step.sub || "");
 
   if(step.sideImage){
     card.innerHTML = `
@@ -1678,7 +1951,7 @@ function renderSection(){
     const txt = document.createElement('div');
     txt.className = "section-sub";
     txt.style.margin = "0";
-    txt.textContent = resolvedSub;
+    txt.textContent = step.sub || "";
     row.appendChild(img);
     row.appendChild(txt);
     card.appendChild(row);
@@ -1686,7 +1959,7 @@ function renderSection(){
     card.innerHTML = `
       <div class="eyebrow">Bookish Summer Soirée</div>
       <h1 class="section-title">${titleImg}${step.title}</h1>
-      <div class="section-sub">${resolvedSub}</div>
+      <div class="section-sub">${step.sub || ""}</div>
     `;
   }
 
@@ -1697,15 +1970,6 @@ function renderSection(){
     div.style.height = "20px";
     div.style.margin = "-6px auto 20px";
     card.appendChild(div);
-  }
-
-  if(sectionValidationMessage){
-    const errBox = document.createElement('div');
-    errBox.className = "info-box";
-    errBox.style.borderLeftColor = "var(--terracotta)";
-    errBox.textContent = sectionValidationMessage;
-    card.appendChild(errBox);
-    sectionValidationMessage = null;
   }
 
   if(step.info){
@@ -1781,24 +2045,20 @@ function renderSection(){
   saveNext.onclick = () => advanceStep(step);
   const saveExit = document.createElement('button');
   saveExit.className = "btn btn-secondary btn-tiny";
-  saveExit.textContent = "Save & return home";
+  saveExit.textContent = cameFromWhatsLeft ? "Save & return to To-Do list" : "Save & return home";
   saveExit.onclick = async () => {
     collectFieldValues(step);
-    if(step.validate){
-      const problems = step.validate();
-      if(problems.length){
-        sectionValidationMessage = `The web address you entered for ${problems.join(", ")} doesn't seem to be an actual website. Can you please re-enter that website address${problems.length>1?"es":""}?`;
-        render();
-        return;
-      }
-    }
-    sectionValidationMessage = null;
     await saveAuthorData(currentAuthor, currentData);
     showToast("Saved!");
     if(currentStepId === "links"){
       generateAndUploadQrCodes(currentAuthor, currentData);
     }
-    currentScreen = "home";
+    if(cameFromWhatsLeft){
+      cameFromWhatsLeft = false;
+      currentScreen = "whats-left";
+    } else {
+      currentScreen = "home";
+    }
     render();
   };
   btnRow.appendChild(saveNext);
@@ -1811,6 +2071,22 @@ function renderSection(){
   btnRowSecondary.appendChild(saveExit);
   card.appendChild(btnRowSecondary);
 
+  const link = document.createElement('div');
+  link.className = "home-link";
+  link.textContent = cameFromWhatsLeft ? "Return to To-Do list" : "Return to home";
+  link.onclick = async () => {
+    collectFieldValues(step);
+    await saveAuthorData(currentAuthor, currentData);
+    if(cameFromWhatsLeft){
+      cameFromWhatsLeft = false;
+      currentScreen = "whats-left";
+    } else {
+      currentScreen = "home";
+    }
+    render();
+  };
+  card.appendChild(link);
+
   const chooseLink = document.createElement('div');
   chooseLink.className = "home-link";
   chooseLink.textContent = "Choose a different section";
@@ -1821,17 +2097,6 @@ function renderSection(){
     render();
   };
   card.appendChild(chooseLink);
-
-  const link = document.createElement('div');
-  link.className = "home-link";
-  link.textContent = "Return to home";
-  link.onclick = async () => {
-    collectFieldValues(step);
-    await saveAuthorData(currentAuthor, currentData);
-    currentScreen = "home";
-    render();
-  };
-  card.appendChild(link);
 
   appendMainScreenLink(card);
 
@@ -2051,153 +2316,6 @@ async function generateAndUploadQrCodes(authorName, data){
 }
 
 /* ---------- SCREEN: QR SHEET PREVIEW ---------- */
-/* ---------- SCREEN: LINK VERIFICATION ---------- */
-let linkVerifyState = {};
-
-function renderLinkVerification(){
-  app.appendChild(logoLockup());
-  const card = document.createElement('div');
-  card.className = "card";
-  card.innerHTML = `
-    <div class="eyebrow">Bookish Summer Soirée</div>
-    <h1 class="section-title">Link Verification</h1>
-    <div class="section-sub">Let's make sure all those links go where you want them to.</div>
-  `;
-
-  const filledKeys = Object.keys(QR_TEMPLATES).filter(k => currentData[k] && currentData[k].trim());
-  filledKeys.forEach(k => { if(!linkVerifyState[k]) linkVerifyState[k] = "unverified"; });
-
-  if(filledKeys.length === 0){
-    const empty = document.createElement('div');
-    empty.className = "info-box";
-    empty.textContent = "You didn't save any links, so there's nothing to verify here.";
-    card.appendChild(empty);
-  } else {
-    const intro = document.createElement('div');
-    intro.className = "info-box";
-    intro.textContent = "Tap any link below — it'll open in a new tab. Take a look, then hop back here and let us know if it's right.";
-    card.appendChild(intro);
-
-    filledKeys.forEach(key=>{
-      const tpl = QR_TEMPLATES[key];
-      const state = linkVerifyState[key];
-      const row = document.createElement('div');
-      row.className = "dropoff-card";
-      row.style.boxShadow = "none";
-
-      const label = document.createElement('div');
-      label.className = "who";
-      label.textContent = tpl.label;
-      row.appendChild(label);
-
-      if(state === "fixing"){
-        const input = document.createElement('input');
-        input.type = "text";
-        input.value = currentData[key];
-        input.style.marginTop = "8px";
-        row.appendChild(input);
-        const saveRow = document.createElement('div');
-        saveRow.className = "btn-row";
-        saveRow.style.marginTop = "10px";
-        const saveBtn = document.createElement('button');
-        saveBtn.className = "btn btn-primary btn-tiny";
-        saveBtn.textContent = "Save & re-check";
-        saveBtn.onclick = async () => {
-          const val = input.value.trim();
-          if(!/^https?:\/\/[^\s]+\.[^\s]{2,}/i.test(val)){
-            alert(`That doesn't look like a real website address yet — please include "https://" and try again.`);
-            return;
-          }
-          currentData[key] = val;
-          linkVerifyState[key] = "unverified";
-          await saveAuthorData(currentAuthor, currentData);
-          generateAndUploadQrCodes(currentAuthor, currentData);
-          render();
-        };
-        saveRow.appendChild(saveBtn);
-        row.appendChild(saveRow);
-      } else {
-        const linkEl = document.createElement('a');
-        linkEl.href = currentData[key];
-        linkEl.target = "_blank";
-        linkEl.rel = "noopener";
-        linkEl.textContent = currentData[key];
-        linkEl.style.cssText = "display:block;margin-top:4px;color:var(--terracotta);word-break:break-all;font-family:'Montserrat',sans-serif;font-size:13px;";
-        row.appendChild(linkEl);
-
-        if(state === "verified"){
-          const badge = document.createElement('div');
-          badge.style.cssText = "margin-top:8px;font-family:'Montserrat',sans-serif;font-weight:700;font-size:12.5px;color:var(--sage);";
-          badge.textContent = "✓ VERIFIED";
-          row.appendChild(badge);
-        } else {
-          const btnRow2 = document.createElement('div');
-          btnRow2.className = "btn-row";
-          btnRow2.style.marginTop = "10px";
-          const rightBtn = document.createElement('button');
-          rightBtn.className = "btn btn-primary btn-tiny";
-          rightBtn.textContent = "IT'S RIGHT";
-          rightBtn.onclick = () => { linkVerifyState[key] = "verified"; render(); };
-          const fixBtn = document.createElement('button');
-          fixBtn.className = "btn btn-secondary btn-tiny";
-          fixBtn.textContent = "LET'S FIX IT";
-          fixBtn.onclick = () => { linkVerifyState[key] = "fixing"; render(); };
-          btnRow2.appendChild(rightBtn);
-          btnRow2.appendChild(fixBtn);
-          row.appendChild(btnRow2);
-        }
-      }
-      card.appendChild(row);
-    });
-  }
-
-  const allVerified = filledKeys.every(k => linkVerifyState[k] === "verified");
-
-  const btnRow = document.createElement('div');
-  btnRow.className = "btn-row";
-  btnRow.style.marginTop = "20px";
-  const continueBtn = document.createElement('button');
-  continueBtn.className = "btn btn-primary";
-  continueBtn.textContent = "Continue";
-  continueBtn.disabled = !allVerified;
-  continueBtn.style.opacity = allVerified ? "1" : "0.5";
-  continueBtn.onclick = () => {
-    if(!allVerified) return;
-    linkVerifyState = {};
-    goToSection("book-signing-plan");
-  };
-  btnRow.appendChild(continueBtn);
-  card.appendChild(btnRow);
-  if(!allVerified && filledKeys.length > 0){
-    const note = document.createElement('div');
-    note.className = "help";
-    note.style.marginTop = "8px";
-    note.textContent = "Verify every link above to continue.";
-    card.appendChild(note);
-  }
-
-  const backLink = document.createElement('div');
-  backLink.className = "home-link";
-  backLink.textContent = "Back to Links";
-  backLink.onclick = () => { currentScreen = "section"; currentStepId = "links"; render(); };
-  card.appendChild(backLink);
-
-  const homeLink = document.createElement('div');
-  homeLink.className = "home-link";
-  homeLink.textContent = "Save & return home";
-  homeLink.onclick = async () => {
-    await saveAuthorData(currentAuthor, currentData);
-    showToast("Saved!");
-    currentScreen = "home";
-    render();
-  };
-  card.appendChild(homeLink);
-  appendMainScreenLink(card);
-
-  app.appendChild(card);
-}
-
-
 function renderQrPreview(){
   app.appendChild(logoLockup());
   const card = document.createElement('div');
@@ -2370,19 +2488,8 @@ function collectFieldValues(step){
   }
 }
 
-let sectionValidationMessage = null;
-
 async function advanceStep(step){
   collectFieldValues(step);
-  if(step.validate){
-    const problems = step.validate();
-    if(problems.length){
-      sectionValidationMessage = `The web address you entered for ${problems.join(", ")} doesn't seem to be an actual website. Can you please re-enter that website address${problems.length>1?"es":""}?`;
-      render();
-      return;
-    }
-  }
-  sectionValidationMessage = null;
   const nextId = step.next ? step.next(currentData) : "done";
   currentData.meta.currentStep = nextId;
   await saveAuthorData(currentAuthor, currentData);
