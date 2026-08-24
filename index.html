@@ -616,14 +616,14 @@ const STEPS = {
     title: "Misc Fun Stuff!", icon: FLOURISH.heart,
     sub: "Don't stress over these. They're just for fun — skip anything you can't think of an answer for.",
     fields: [
-      {key:"drink", label:"What's your favorite thing to drink while writing?", type:"text"},
-      {key:"booksWritten", label:"How many books have you written?", type:"text", help:"This doesn't mean formally published! It could be 5. It could be 65. No need to overthink it."},
-      {key:"rentFreeBook", label:"Is there a book that lives rent free in your head more than most other books?", type:"text"},
-      {key:"musicalTitle", label:"If you were to write a cheesy musical about your life, what would it be called?", type:"text", help:"This has nothing to do with whether you think you will. It's all for kicks and giggles."},
+      {key:"drink", label:"What's your favorite thing to drink while writing?", type:"text", autoCapitalize:true},
+      {key:"booksWritten", label:"How many books have you written?", type:"number", help:"This doesn't mean formally published! It could be 5. It could be 65. No need to overthink it."},
+      {key:"rentFreeBook", label:"Is there a book that lives rent free in your head more than most other books?", type:"text", autoCapitalize:true},
+      {key:"musicalTitle", label:"If you were to write a cheesy musical about your life, what would it be called?", type:"text", autoCapitalize:true, help:"This has nothing to do with whether you think you will. It's all for kicks and giggles."},
       {key:"numberGuess", label:"Think of a number between 1–100 and put it below.", type:"number"},
-      {key:"heroineBook", label:"If you could be the heroine of any book (other than one of yours), which book would it be?", type:"text", help:"Feel free to elaborate on your choice, or just give the title."},
+      {key:"heroineBook", label:"If you could be the heroine of any book (other than one of yours), which book would it be?", type:"text", autoCapitalize:true, help:"Feel free to elaborate on your choice, or just give the title."},
       {key:"readingFormat", label:"When you read for pleasure, you usually grab...", type:"radio", options:["A physical book","Kindle","Headphones for an audiobook","A solid mix of all that"]},
-      {key:"sportsSong", label:"If you were a sports superstar, what song would you want played when you ran out onto the field?", type:"text"},
+      {key:"sportsSong", label:"If you were a sports superstar, what song would you want played when you ran out onto the field?", type:"text", autoCapitalize:true},
       {key:"contactPermission", label:"We may want to contact someone in your life (spouse, mom, friend, sister, etc) to get some fun inside info about you — nothing embarrassing! Do we have your permission to do that?", type:"radio", required:true, options:["Yes","No"]}
     ],
     next: (d) => d.contactPermission === "Yes" ? "fun-stuff-cont" : "links"
@@ -3350,6 +3350,11 @@ function renderField(f){
     inp.dataset.key = f.key;
     inp.value = currentData[f.key] || "";
     if(f.type === "url") inp.placeholder = "https://";
+    if(f.type === "number"){
+      inp.inputMode = "numeric";
+      inp.pattern = "[0-9]*";
+    }
+    if(f.autoCapitalize) inp.autocapitalize = "sentences";
     if(f.placeholder) inp.placeholder = f.placeholder;
     wrap.appendChild(inp);
   }
