@@ -662,7 +662,7 @@ const STEPS = {
       {key:"linkSpotify", label:"Spotify", type:"url", help:"Leave blank if not applicable."},
       {key:"linkOther", label:"Name and link to anywhere else we've missed", type:"text", help:"Example: Spotify, [link]"}
     ],
-    next: (d) => linkVerificationFields().length ? "link-verification" : "book-signing-plan"
+    next: () => "book-signing-plan"
   },
 
   "link-verification": {
@@ -799,7 +799,7 @@ const STEPS = {
   },
 
   "dropoff": {
-    title: "Getting My Books & Swag to You", icon: FLOURISH.heart,
+    title: "Getting My Book &/or Swag to You", icon: FLOURISH.heart,
     dropoffInfo: true,
     sub: "Deadline for collecting prizes and swag is May 1 (exception: a book releasing between May 1 and the Soirée).",
     fields: [
@@ -1927,7 +1927,7 @@ function computeChecklist(){
       "Mail it to Nicole": "Mail to Nicole"
     };
     sections.push({
-      title: "Getting My Books & Swag to You",
+      title: "Getting My Book &/or Swag to You",
       rows: [
         {label:"Drop-off/mailing method", preview: d.dropoffMethod ? (dropoffPreviewLabels[d.dropoffMethod] || truncatePreview(d.dropoffMethod,50)) : null,
          done:isFieldFilled("dropoffMethod"), required:true, target:"dropoff", addLabel:"Need to select"}
@@ -2465,18 +2465,17 @@ function renderSection(){
     async function saveExitHandler(){
       collectFieldValues(step);
       if(currentStepId === "links"){
-        const issues = findLinkFormatIssues();
-        if(issues.length){
-          currentScreen = "fix-links";
+        gateLinksThenRun(async () => {
+          await saveAuthorData(currentAuthor, currentData);
+          showToast("Saved!");
+          generateAndUploadQrCodes(currentAuthor, currentData);
+          currentScreen = "home";
           render();
-          return;
-        }
+        });
+        return;
       }
       await saveAuthorData(currentAuthor, currentData);
       showToast("Saved!");
-      if(currentStepId === "links"){
-        generateAndUploadQrCodes(currentAuthor, currentData);
-      }
       currentScreen = "home";
       render();
     }
@@ -2530,19 +2529,18 @@ function renderSection(){
     firstLink.textContent = cameFromWhatsLeft ? "Save & return to To-Do list" : "Save & choose a different section";
     firstLink.onclick = async () => {
       collectFieldValues(step);
-      if(currentStepId === "links" && findLinkFormatIssues().length){
-        currentScreen = "fix-links";
+      async function doExit(){
+        await saveAuthorData(currentAuthor, currentData);
+        if(cameFromWhatsLeft){
+          cameFromWhatsLeft = false;
+          currentScreen = "whats-left";
+        } else {
+          currentScreen = "nav-submenu";
+        }
         render();
-        return;
       }
-      await saveAuthorData(currentAuthor, currentData);
-      if(cameFromWhatsLeft){
-        cameFromWhatsLeft = false;
-        currentScreen = "whats-left";
-      } else {
-        currentScreen = "nav-submenu";
-      }
-      render();
+      if(currentStepId === "links"){ gateLinksThenRun(doExit); return; }
+      doExit();
     };
     card.appendChild(firstLink);
 
@@ -2551,16 +2549,15 @@ function renderSection(){
     homeLink.textContent = "Save & return to home screen";
     homeLink.onclick = async () => {
       collectFieldValues(step);
-      if(currentStepId === "links" && findLinkFormatIssues().length){
-        currentScreen = "fix-links";
+      async function doExit(){
+        await saveAuthorData(currentAuthor, currentData);
+        cameFromWhatsLeft = false;
+        cameFromNavSubmenu = false;
+        currentScreen = "home";
         render();
-        return;
       }
-      await saveAuthorData(currentAuthor, currentData);
-      cameFromWhatsLeft = false;
-      cameFromNavSubmenu = false;
-      currentScreen = "home";
-      render();
+      if(currentStepId === "links"){ gateLinksThenRun(doExit); return; }
+      doExit();
     };
     card.appendChild(homeLink);
 
@@ -2617,15 +2614,16 @@ function renderFixLinks(){
   const enteredViaShortcut = cameFromWhatsLeft || cameFromNavSubmenu;
 
   function proceedForward(){
-    const nextId = step.next ? step.next(currentData) : "done";
-    currentData.meta.currentStep = nextId;
-    saveAuthorData(currentAuthor, currentData).then(()=>{
+    gateLinksThenRun(linksPendingAction || (async () => {
+      const nextId = step.next ? step.next(currentData) : "done";
+      currentData.meta.currentStep = nextId;
+      await saveAuthorData(currentAuthor, currentData);
       showToast("Saved!");
       generateAndUploadQrCodes(currentAuthor, currentData);
       cameFromWhatsLeft = false;
       cameFromNavSubmenu = false;
       goToSection(nextId);
-    });
+    }));
   }
 
   function renderFooter(){
@@ -2663,29 +2661,40 @@ function renderFixLinks(){
       homeLink.textContent = "Save & return to home screen";
       homeLink.style.marginTop = resolved ? "20px" : "0";
       homeLink.onclick = async () => {
-        await saveAuthorData(currentAuthor, currentData);
-        showToast("Saved!");
-        currentScreen = "home";
-        render();
+        async function doExit(){
+          await saveAuthorData(currentAuthor, currentData);
+          showToast("Saved!");
+          currentScreen = "home";
+          render();
+        }
+        // Once format is genuinely fixed, still route through verification
+        // before this counts as a real exit — but while things are still
+        // broken/deferred, this stays a pure escape hatch (nothing to
+        // verify on a link that isn't even valid yet).
+        if(resolved){ gateLinksThenRun(doExit); } else { doExit(); }
       };
       footerWrap.appendChild(homeLink);
 
       appendMainScreenLink(footerWrap, "Save & return to main screen");
     } else {
       // Came from the To-Do List or "Go to a specific section": these exits
-      // are always available, regardless of whether every link is resolved.
+      // stay available even while things are still broken/deferred, but
+      // once everything's fixed, they route through verification too.
       const firstLink = document.createElement('div');
       firstLink.className = "home-link";
       firstLink.textContent = cameFromWhatsLeft ? "Save & return to To-Do list" : "Save & choose a different section";
       firstLink.onclick = async () => {
-        await saveAuthorData(currentAuthor, currentData);
-        if(cameFromWhatsLeft){
-          cameFromWhatsLeft = false;
-          currentScreen = "whats-left";
-        } else {
-          currentScreen = "nav-submenu";
+        async function doExit(){
+          await saveAuthorData(currentAuthor, currentData);
+          if(cameFromWhatsLeft){
+            cameFromWhatsLeft = false;
+            currentScreen = "whats-left";
+          } else {
+            currentScreen = "nav-submenu";
+          }
+          render();
         }
-        render();
+        if(resolved){ gateLinksThenRun(doExit); } else { doExit(); }
       };
       footerWrap.appendChild(firstLink);
 
@@ -2693,11 +2702,14 @@ function renderFixLinks(){
       homeLink.className = "home-link";
       homeLink.textContent = "Save & return to home screen";
       homeLink.onclick = async () => {
-        await saveAuthorData(currentAuthor, currentData);
-        cameFromWhatsLeft = false;
-        cameFromNavSubmenu = false;
-        currentScreen = "home";
-        render();
+        async function doExit(){
+          await saveAuthorData(currentAuthor, currentData);
+          cameFromWhatsLeft = false;
+          cameFromNavSubmenu = false;
+          currentScreen = "home";
+          render();
+        }
+        if(resolved){ gateLinksThenRun(doExit); } else { doExit(); }
       };
       footerWrap.appendChild(homeLink);
 
@@ -2770,6 +2782,30 @@ let linkVerificationEditingKey = null;
 function linkVerificationFields(){
   return (STEPS["links"].fields || []).filter(f => f.type === "url" && currentData[f.key]);
 }
+function linksNeedVerification(){
+  return linkVerificationFields().some(f => !currentData.meta.linkVerification[f.key]);
+}
+let linksPendingAction = null;
+/* Central gatekeeper: whenever someone tries to leave the Links screen (by
+   any route — continuing forward, or any of the shortcut save-and-exit
+   links), run this first. It makes sure malformed links get fixed and every
+   link gets a verification decision before the intended action actually
+   happens, no matter how the Links screen was reached. */
+function gateLinksThenRun(action){
+  const issues = findLinkFormatIssues();
+  if(issues.length){
+    linksPendingAction = action;
+    currentScreen = "fix-links";
+    render();
+    return;
+  }
+  if(linksNeedVerification()){
+    linksPendingAction = action;
+    goToSection("link-verification");
+    return;
+  }
+  action();
+}
 
 function renderLinkVerification(step){
   currentData.meta.linkVerification = currentData.meta.linkVerification || {};
@@ -2836,7 +2872,7 @@ function renderLinkVerification(step){
         const editWrap = document.createElement('div');
         editWrap.style.cssText = "margin-top:8px;";
         const input = document.createElement('input');
-        input.type = "text";
+        input.type = "url";
         input.value = currentData[f.key] || "";
         input.style.cssText = "width:100%;padding:10px;border:1.5px solid rgba(12,30,61,0.2);border-radius:8px;font-family:'Lora',serif;font-size:14.5px;margin-bottom:8px;";
         editWrap.appendChild(input);
@@ -2916,12 +2952,15 @@ function renderLinkVerification(step){
         showToast("Just need a decision on the rest of your links first — IT'S RIGHT, LET'S FIX IT, or It's not right, but let's fix this later.");
         return;
       }
-      const nextId = step.next ? step.next(currentData) : "done";
-      currentData.meta.currentStep = nextId;
-      await saveAuthorData(currentAuthor, currentData);
-      showToast("Saved!");
       linkVerificationEditingKey = null;
-      goToSection(nextId);
+      await saveAuthorData(currentAuthor, currentData);
+      gateLinksThenRun(linksPendingAction || (async () => {
+        const nextId = step.next ? step.next(currentData) : "done";
+        currentData.meta.currentStep = nextId;
+        await saveAuthorData(currentAuthor, currentData);
+        showToast("Saved!");
+        goToSection(nextId);
+      }));
     };
     btnRow.appendChild(saveNext);
     card.appendChild(btnRow);
@@ -3519,7 +3558,7 @@ function renderField(f){
     wrap.appendChild(group);
   } else {
     const inp = document.createElement('input');
-    inp.type = f.type === "url" ? "text" : f.type;
+    inp.type = f.type;
     inp.dataset.key = f.key;
     inp.value = currentData[f.key] || "";
     if(f.type === "url") inp.placeholder = "https://";
@@ -3916,7 +3955,15 @@ function collectFieldValues(step){
       currentData[f.key] = checked ? checked.value : (currentData[f.key] || null);
     } else {
       const el = document.querySelector(`[data-key="${f.key}"]`);
-      if(el) currentData[f.key] = f.type === "url" ? normalizeUrlValue(el.value) : el.value;
+      if(el){
+        const newVal = f.type === "url" ? normalizeUrlValue(el.value) : el.value;
+        // If a link's value actually changed, its old verified/deferred status
+        // no longer applies — it needs to be checked again.
+        if(f.type === "url" && currentData[f.key] !== newVal && currentData.meta && currentData.meta.linkVerification){
+          delete currentData.meta.linkVerification[f.key];
+        }
+        currentData[f.key] = newVal;
+      }
     }
   });
   if(currentStepId === "general-info"){
@@ -3943,12 +3990,15 @@ function collectFieldValues(step){
 async function advanceStep(step){
   collectFieldValues(step);
   if(currentStepId === "links"){
-    const issues = findLinkFormatIssues();
-    if(issues.length){
-      currentScreen = "fix-links";
-      render();
-      return;
-    }
+    gateLinksThenRun(async () => {
+      const nextId = step.next ? step.next(currentData) : "done";
+      currentData.meta.currentStep = nextId;
+      await saveAuthorData(currentAuthor, currentData);
+      showToast("Saved!");
+      generateAndUploadQrCodes(currentAuthor, currentData); // runs in background, doesn't block navigation
+      goToSection(nextId);
+    });
+    return;
   }
   if(currentStepId === "presale-link"){
     const hasLink = currentData.presaleLink && currentData.presaleLink.trim() !== "";
