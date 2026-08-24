@@ -150,9 +150,6 @@
     gap:12px;
     margin-top:24px;
   }
-  @media (min-width:480px){
-    .author-grid{ grid-template-columns:repeat(3, 1fr); }
-  }
   .author-tile{
     font-family:'Montserrat',sans-serif;
     font-weight:600;
@@ -665,7 +662,7 @@ const STEPS = {
       {key:"linkSpotify", label:"Spotify", type:"url", help:"Leave blank if not applicable."},
       {key:"linkOther", label:"Name and link to anywhere else we've missed", type:"text", help:"Example: Spotify, [link]"}
     ],
-    next: () => "link-verification"
+    next: (d) => linkVerificationFields().length ? "link-verification" : "book-signing-plan"
   },
 
   "link-verification": {
@@ -724,7 +721,7 @@ const STEPS = {
     title: "Presale Book Link", dividerBelow: FLOURISH.f1,
     sub: "We'll post all presale links in our linktree for attendees to find.",
     info: true,
-    body: "Whether you're using a Google form, email, or something else, we need a link to where people can presale books from you.<br><br>If you don't have a link, or don't love the form you have, we have one you can customize and use as you'd like. Click <a href=\"https://forms.gle/3oYiZVmMW4AEPKFt5\" target=\"_blank\" rel=\"noopener\">HERE</a> to look at the form (<em>The form will open in a separate window, and you won't lose your progress here</em>). If you'd like to use that form type \u201cwill use your google form\u201d and we'll send you an editable link.<br><br>All presale links will be posted in the Soir\u00e9e Linktree on March 1. Please have your form updated and ready by then.",
+    body: "Whether you're using a Google form, email, or something else, we need a link to where people can order books from you.<br><br>If you don't have a link, or don't love the form you have, we have one you can customize and use as you'd like. Click <a href=\"https://forms.gle/3oYiZVmMW4AEPKFt5\" target=\"_blank\" rel=\"noopener\">HERE</a> to look at the form (<em>The form will open in a separate window, and you won't lose your progress here</em>).<br><br>All presale links will be posted in the Soir\u00e9e Linktree when tickets go on sale. Please have your form updated and ready by then.",
     fields: [
       {key:"presaleLink", label:"What link do you want people to use to presale books?", type:"url"},
       {key:"presaleFormChoice", label:"", type:"radio", options:[
@@ -743,7 +740,7 @@ const STEPS = {
     body: `Everyone will be given a tote bag with awesome bookish swag. Do you want to add any of your swag? We are happy to add whatever you send. Examples of past author swag: stickers, bookmarks, magnets, bracelets, custom tins with annotation tabs inside.<br><br>
     You can send as much as you want, and if there isn't enough for each tote, that's fine! However many you send is how many totes will get your swag.<br><br>
     There will be a total of 175 totes.<br><br>
-    <strong>FYI:</strong> To be able to stuff totes and keep my mental sanity, the deadline for collecting swag is <strong>May 1</strong>.`,
+    <strong>FYI:</strong> To be able to stuff totes and keep my mental sanity, the deadline for receiving swag is <strong>May 1</strong>.`,
     fields: [
       {key:"swagPlan", label:"", type:"radio", required:true, options:[
         "I'd love to get some of my swag in the totes!",
@@ -761,7 +758,7 @@ const STEPS = {
     The committee has already started working tirelessly on finding prizes, but it takes a ridiculous amount of time to gather 175 different prizes for our book-loving community.<br><br>
     Are you interested in donating a book or two or ten, or a whole series or two, as a prize? If so: YEAH! If not: we totally understand.<br><br>
     Each book/series that is donated will have a custom bookmark inside listing you as the donating author, and include a QR barcode to your website.<br><br>
-    <strong>FYI:</strong> To be able to package prizes and keep my mental sanity, the deadline for collecting prizes is <strong>May 1</strong> <em>(an exception would be if someone is donating a book that comes out between May 1 and the Soirée)</em>.`,
+    <strong>FYI:</strong> To be able to package prizes and keep my mental sanity, the deadline for receiving prizes is <strong>May 1</strong> <em>(an exception would be if someone is donating a book that comes out between May 1 and the Soirée)</em>.`,
     fields: [
       {key:"prizesPlan", label:"", type:"radio", required:true, options:[
         "I'd love to donate some prizes!",
@@ -818,14 +815,14 @@ const STEPS = {
     info: true,
     sub: "Just a quick note — no questions in this section.",
     body: `This event sold out in less than one hour last year — so make sure you let your readers know when tickets will be going on sale so they don't miss their chance to see you. The magic moment is <strong>March 1 at 10am sharp!</strong><br><br>
-    I have a variety of graphics you can use when posting or emailing about the event. You will find them in this form on both the home screen and main author page.<br><br>
+    I have a variety of graphics you can use when posting or emailing about the event. You will find them in this form on both the <strong>home screen</strong> and <strong>main author page</strong>.<br><br>
     When a social media post is made feel free to add it to your stories. And if there is ever a post you'd like to see on your author feed as well, let me know and I'll add you as a collaborator.`,
     next: () => "final-comments"
   },
 
   "final-comments": {
     title: "Thanks So Much!", icon: FLOURISH.heart,
-    sub: "We tried to think of everything, but there's always a chance we'll need other info along the way — sorry if that happens! But for now, that's it. See you at the Soirée!!!",
+    sub: "We know that probably took several minutes to fill out — thank you!<br><br>You can come back if you need a reminder of any information, fill in answers you left open, update information, grab graphics, check calendar dates, or anything else.<br><br>See you at the Soirée!!!!",
     fields: [
       {key:"finalComments", label:"Any questions, comments, or requests for us?", type:"textarea"}
     ],
@@ -901,9 +898,9 @@ const GRAPHICS = [
 ];
 
 const DROPOFF_ADDRESSES = [
-  {value:"Take it to Lynette", prefix:"Take to:", who:"Lynette Baird", handle:"@toryhooked", addr:"507 N Pinnacle Ln, Saratoga Springs, UT"},
-  {value:"Take it to Nicole", prefix:"Take to:", who:"Nicole Kimzey", handle:null, addr:"496 E Kays Cir, Washington, UT"},
-  {value:"Mail it to Nicole", prefix:"Mail to:", who:"Nicole Kimzey", handle:null, addr:"496 E Kays Cir, Washington, UT 84780"}
+  {value:"Take it to Lynette", prefix:"I will drop off my swag &/or prizes by May 1 to:", who:"Lynette Baird", handle:"@toryhooked", addr:"507 N Pinnacle Ln, Saratoga Springs, UT"},
+  {value:"Take it to Nicole", prefix:"I will drop off my swag &/or prizes by May 1 to:", who:"Nicole Kimzey", handle:null, addr:"496 E Kays Cir, Washington, UT"},
+  {value:"Mail it to Nicole", prefix:"I will mail my swag &/or prizes so they'll arrive by May 1 to:", who:"Nicole Kimzey", handle:null, addr:"496 E Kays Cir, Washington, UT 84780"}
 ];
 
 const VENUE_ADDRESS = "550 N University Ave, Provo, UT 84601";
@@ -1031,7 +1028,7 @@ async function loadAuthorData(author){
     });
     const json = await res.json();
     if(json && json.success && json.exists){
-      const data = { meta: { welcomeSeen: !!json.meta.welcomeSeen, currentStep: json.meta.currentStep || "general-info", generalInfoUpdatedAt:null, linkVerification: json.meta.linkVerification || {} }, ...json.data };
+      const data = { meta: { welcomeSeen: !!json.meta.welcomeSeen, currentStep: json.meta.currentStep || "general-info", generalInfoUpdatedAt:null, linkVerification: json.meta.linkVerification || {}, presaleFormRequestSent: !!json.meta.presaleFormRequestSent }, ...json.data };
       if(json.headshotUrl) data.headshotUrl = json.headshotUrl;
       if(json.logoUrl) data.logoUrl = json.logoUrl;
       migrateBooksSellingField(data);
@@ -1124,7 +1121,7 @@ function migrateBooksSellingField(data){
   }
 }
 function freshData(){
-  return { meta:{ welcomeSeen:false, currentStep:"general-info", generalInfoUpdatedAt:null, linkVerification:{} } };
+  return { meta:{ welcomeSeen:false, currentStep:"general-info", generalInfoUpdatedAt:null, linkVerification:{}, presaleFormRequestSent:false } };
 }
 async function saveAuthorData(author, data){
   localCache.set(storageKey(author), JSON.stringify(data), true);
@@ -1291,6 +1288,11 @@ function renderAuthorSelect(){
 
   const grid = document.createElement('div');
   grid.className = "author-grid";
+  const cols = 2;
+  const rows = Math.ceil(AUTHORS.length / cols) || 1;
+  grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+  grid.style.gridTemplateRows = `repeat(${rows}, auto)`;
+  grid.style.gridAutoFlow = "column";
   AUTHORS.forEach(name=>{
     const t = document.createElement('div');
     t.className = "author-tile";
@@ -3875,6 +3877,15 @@ function collectFieldValues(step){
   if(currentStepId === "presale-plan" && currentData.presalePlan === "No"){
     currentData.presaleLink = "";
     currentData.presaleFormChoice = null;
+  }
+  // The first time someone picks "Please send me your form that I can
+  // personalize" on the Presale Book Link screen, let Nicole know by email.
+  // Only fires once per author (tracked in meta), not on every re-save.
+  if(currentStepId === "presale-link"
+     && currentData.presaleFormChoice === "Please send me your form that I can personalize"
+     && !currentData.meta.presaleFormRequestSent){
+    currentData.meta.presaleFormRequestSent = true;
+    pushToSheet("requestPresaleForm", { authorName: currentAuthor, authorEmail: currentData.email || "" });
   }
 }
 
