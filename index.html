@@ -280,6 +280,18 @@
   }
   .info-box a{ color:var(--terracotta); font-weight:600; text-decoration:underline; }
   .info-box strong{ color:var(--terracotta); }
+  .tentative-box{
+    background:#FDF6DD;
+    border-left:4px solid #F4C542;
+    border-radius:8px;
+    padding:14px 18px;
+    font-family:'Montserrat',sans-serif;
+    font-size:13px;
+    color:#5c4400;
+    margin-top:10px;
+    margin-bottom:18px;
+    line-height:1.6;
+  }
 
   /* ---------- Checklist (What Else Do I Need To Do?) ---------- */
   .checklist-summary{
@@ -585,7 +597,7 @@ const STEPS = {
       {key:"email", label:"Email address", type:"email", required:true, help:"The one you want Soirée correspondence to go to."},
       {key:"instagram", label:"Instagram profile name", type:"text", required:true, placeholder:"@"},
       {key:"bio", label:"Bio", type:"textarea", required:true},
-      {key:"headshot", label:"Headshot", type:"file", help:"We'll use this for marketing. Upload a high-resolution photo (JPG or PNG)."},
+      {key:"headshot", label:"Headshot", type:"file", required:true, help:"We'll use this for marketing. Upload a high-resolution photo (JPG or PNG)."},
       {key:"logo", label:"Your logo", type:"file", help:"If you don't have one, skip this. PNG with a transparent background is preferred, but JPEG works too."}
     ],
     next: () => "bingo-book"
@@ -659,92 +671,103 @@ const STEPS = {
   },
 
   "book-signing-plan": {
-    title: "Your Books at the Book Signing", icon: FLOURISH.bookStack,
-    sub: "You're welcome to bring books to sell, do a pre-sale, both, or neither — whatever works for you.",
+    title: "Selling Books at the Soirée", icon: FLOURISH.bookStack,
+    sub: "Authors may sell books at the Soirée, offer presales, or do both! This section is only about books you plan to sell at the Soirée; we'll cover presales next.",
     fields: [
-      {key:"bookSigningPlan", label:"You plan to:", type:"radio", required:true, options:[
-        "Bring a selection of books to sell at the event AND have a pre-sale",
-        "Bring a selection of books to sell at the event, but NOT have a pre-sale",
-        "ONLY a pre-sale, but NOT bring a selection of books to sell at the event.",
-        "I won't sell books at the Soirée, OR have a pre-sale",
+      {key:"sellingPlan", label:"", type:"radio", required:true, options:[
+        "I plan to sell books at the Soirée",
+        "I won't be selling books at the Soirée",
         "Haven't decided yet"
       ]}
     ],
     next: (d) => {
-      switch(d.bookSigningPlan){
-        case "Bring a selection of books to sell at the event, but NOT have a pre-sale": return "books-selling";
-        case "ONLY a pre-sale, but NOT bring a selection of books to sell at the event.": return "presale-link";
-        case "Bring a selection of books to sell at the event AND have a pre-sale": return "presale-link";
-        default: return "swag-prizes";
-      }
+      if(d.sellingPlan === "I plan to sell books at the Soirée") return "books-selling";
+      return "presale-plan";
     }
   },
 
-  "presale-link": {
-    title: "Pre-sale Book Link", dividerBelow: FLOURISH.f1,
-    sub: "We'll post all pre-sale links in our linktree for attendees to find.",
-    info: true,
-    body: "Whether you're using a Google form, email, or something else, we need a link to where people can preorder books from you.<br><br>If you don't have a link, or don't love the form you have, we have one you can customize and use as you'd like. Click <a href=\"https://forms.gle/3oYiZVmMW4AEPKFt5\" target=\"_blank\" rel=\"noopener\">HERE</a> to look at the form (<em>The form will open in a separate window, and you won't lose your progress here</em>). If you'd like to use that form type \u201cwill use your google form\u201d and we'll send you an editable link.",
-    fields: [
-      {key:"presaleLink", label:"What link do you want people to use to pre-order books?", type:"url"}
-    ],
-    next: (d) => d.bookSigningPlan === "Bring a selection of books to sell at the event AND have a pre-sale" ? "books-selling" : "swag-prizes"
-  },
-
   "books-selling": {
-    title: "Books You Are Selling During the Book Signing", icon: FLOURISH.book,
-    sub: "This list will be available to the attendees, so if you don't know right now, you'll want to get us that info before Feb 1 so we can get the master list ready before tickets go on sale. Attendees will be informed there is no guarantee on the number of copies authors will have, so if they have their heart set on getting a particular book(s) signed, and no pre-order was offered, they should bring their own copy.",
-    fields: [
-      {key:"titlesBringingA", label:"Do you know what titles are you going to have at the Soirée?", type:"textarea"}
-    ],
-    next: () => "swag-prizes"
+    title: "Books You Will Sell at the Soirée", icon: FLOURISH.book,
+    sub: "A list of all titles being sold by all authors will be given to all attendees.",
+    customType: "sellingTitles",
+    next: () => "presale-plan"
   },
 
-  "swag-prizes": {
-    title: "Swag & Prizes", icon: FLOURISH.heart,
+  "presale-plan": {
+    title: "Presale Books for the Soirée", icon: FLOURISH.bookStack,
+    sub: "Are you planning on having a presale for books at the Soirée?",
+    fields: [
+      {key:"presalePlan", label:"", type:"radio", required:true, options:["Yes","No"]}
+    ],
+    next: (d) => d.presalePlan === "Yes" ? "presale-link" : "swag"
+  },
+
+  "presale-link": {
+    title: "Presale Book Link", dividerBelow: FLOURISH.f1,
+    sub: "We'll post all presale links in our linktree for attendees to find.",
+    info: true,
+    body: "Whether you're using a Google form, email, or something else, we need a link to where people can presale books from you.<br><br>If you don't have a link, or don't love the form you have, we have one you can customize and use as you'd like. Click <a href=\"https://forms.gle/3oYiZVmMW4AEPKFt5\" target=\"_blank\" rel=\"noopener\">HERE</a> to look at the form (<em>The form will open in a separate window, and you won't lose your progress here</em>). If you'd like to use that form type \u201cwill use your google form\u201d and we'll send you an editable link.<br><br>All presale links will be posted in the Soir\u00e9e Linktree on March 1. Please have your form updated and ready by then.",
+    fields: [
+      {key:"presaleLink", label:"What link do you want people to use to presale books?", type:"url"},
+      {key:"presaleFormChoice", label:"", type:"radio", options:[
+        "I am going to make my own form, but don't have a link for it yet",
+        "Please send me your form that I can personalize"
+      ]}
+    ],
+    next: () => "swag"
+  },
+
+
+  "swag": {
+    title: "Swag", icon: FLOURISH.heart,
     sub: "Here's where you tell us what you're up for.",
     info: true,
-    body: `<strong>SWAG BAGS:</strong><br>
-    Everyone will be given a tote bag with awesome bookish swag. Do you want to add any of your swag? We are happy to add whatever you send. Examples of past author swag: stickers, bookmarks, magnets, bracelets, custom tins with annotation tabs inside.<br><br>
+    body: `Everyone will be given a tote bag with awesome bookish swag. Do you want to add any of your swag? We are happy to add whatever you send. Examples of past author swag: stickers, bookmarks, magnets, bracelets, custom tins with annotation tabs inside.<br><br>
     You can send as much as you want, and if there isn't enough for each tote, that's fine! However many you send is how many totes will get your swag.<br><br>
     There will be a total of 175 totes.<br><br>
-    <strong>PRIZES:</strong><br>
-    If you've been to the Soirée before you know that it's important to us that everyone goes home with a prize!<br><br>
+    <strong>FYI:</strong> To be able to stuff totes and keep my mental sanity, the deadline for collecting swag is <strong>May 1</strong>.`,
+    fields: [
+      {key:"swagPlan", label:"", type:"radio", required:true, options:[
+        "I'd love to get some of my swag in the totes!",
+        "I'll pass on adding swag to the totes."
+      ]}
+    ],
+    next: () => "prizes"
+  },
+
+  "prizes": {
+    title: "Prizes", icon: FLOURISH.heart,
+    sub: "Here's where you tell us what you're up for.",
+    info: true,
+    body: `If you've been to the Soirée before you know that it's important to us that everyone goes home with a prize!<br><br>
     The committee has already started working tirelessly on finding prizes, but it takes a ridiculous amount of time to gather 175 different prizes for our book-loving community.<br><br>
     Are you interested in donating a book or two or ten, or a whole series or two, as a prize? If so: YEAH! If not: we totally understand.<br><br>
     Each book/series that is donated will have a custom bookmark inside listing you as the donating author, and include a QR barcode to your website.<br><br>
-    <strong>FYI:</strong> To be able to stuff totes, package prizes, AND keep my mental sanity, the deadline for collecting prizes & swag is <strong>May 1</strong> <em>(an exception would be if someone is donating a book that comes out between May 1 and the Soirée)</em>.`,
+    <strong>FYI:</strong> To be able to package prizes and keep my mental sanity, the deadline for collecting prizes is <strong>May 1</strong> <em>(an exception would be if someone is donating a book that comes out between May 1 and the Soirée)</em>.`,
     fields: [
-      {key:"swagPrizePlan", label:"", type:"radio", required:true, options:[
-        "I would LOVE to add some of my swag to the totes AND donate book(s) for prizes!",
-        "I would LOVE to add some of my swag to the totes, but I'll PASS on donating books for prizes.",
-        "I would LOVE to donate book(s) for prizes, but I'll PASS on adding swag to the totes.",
-        "I will PASS on adding swag or donating book(s)."
+      {key:"prizesPlan", label:"", type:"radio", required:true, options:[
+        "I'd love to donate some prizes!",
+        "I'll pass on donating prizes."
       ]}
     ],
+    shortcutContinueLabel: "Continue in Prize Section",
     next: (d) => {
-      if (d.swagPrizePlan && d.swagPrizePlan.startsWith("I will PASS on adding swag or")) return "social-media";
-      if (d.swagPrizePlan === "I would LOVE to add some of my swag to the totes, but I'll PASS on donating books for prizes.") return "dropoff";
-      return "donation-knowledge";
+      if(d.prizesPlan === "I'd love to donate some prizes!") return "donation-knowledge";
+      if(d.swagPlan === "I'd love to get some of my swag in the totes!") return "dropoff";
+      return "social-media";
     }
   },
 
   "donation-knowledge": {
     title: "Donated Books", icon: FLOURISH.book,
-    sub: "",
+    sub: "Do you know what prize(s) you will be donating?",
     info: true,
     body: `YOU ARE AN ANGEL!!!! Thank you so much — this is the best help we can get, and it helps keep ticket prices down too.<br><br>
     Since we have to keep track of how many prizes we have (so we know how many more we need), the more important information to get sooner-rather-than-later is <em>how many</em>. The titles can come later. But you might not know either right now, and that's okay too.`,
-    fields: [
-      {key:"donationKnowledge", label:"", type:"radio", required:true, options:[
-        "I already know what book(s) I'm donating, AND how many!",
-        "I don't have a clue about titles, but I know how many I'll donate.",
-        "I don't have a clue about either, but I'll let you know as soon as I decide."
-      ]}
-    ],
+    customType: "donationKnowledge",
+    shortcutContinueLabel: "Continue in Prize Section",
     next: (d) => {
-      if (d.donationKnowledge === "I already know what book(s) I'm donating, AND how many!") return "donation-titles";
-      if (d.donationKnowledge === "I don't have a clue about titles, but I know how many I'll donate.") return "donation-numbers";
+      if (d.donationKnowledge === "I know what prizes I'm donating") return "donation-titles";
       return "dropoff";
     }
   },
@@ -756,17 +779,8 @@ const STEPS = {
     next: () => "dropoff"
   },
 
-  "donation-numbers": {
-    title: "Donated Book Numbers", icon: FLOURISH.book,
-    sub: "YOU'RE A ROCKSTAR! Thank you, thank you, thank you!",
-    fields: [
-      {key:"donatedCount", label:"This is how many prizes you're planning on donating:", type:"text", help:"I'm counting PRIZES, not books — so five copies of the same book would be five prizes. A five book series would be one prize (cuz I'd never break up a series).\nExamples:\n\u2022 XX single books and XX series\n\u2022 XX series\n\u2022 No clue if they'll be single books or a series, but I'll do XX prizes."}
-    ],
-    next: () => "dropoff"
-  },
-
   "dropoff": {
-    title: "How Do I Get My Books &/or SWAG to You?", icon: FLOURISH.heart,
+    title: "Getting My Books & Swag to You", icon: FLOURISH.heart,
     dropoffInfo: true,
     sub: "Deadline for collecting prizes and swag is May 1 (exception: a book releasing between May 1 and the Soirée).",
     fields: [
@@ -801,7 +815,7 @@ const STEPS = {
 
 const STEP_ORDER = ["general-info","bingo-book","misc-fun","fun-stuff-cont","links","link-verification",
   "book-signing-plan","presale-link","books-selling",
-  "swag-prizes","donation-knowledge","donation-titles","donation-numbers","dropoff","social-media","final-comments"];
+  "swag","prizes","donation-knowledge","donation-titles","dropoff","social-media","final-comments"];
 
 const NAV_MENU = [
   {label:"General Info", target:"general-info"},
@@ -810,9 +824,10 @@ const NAV_MENU = [
   {label:"Links to places readers can find you", target:"links"},
   {label:"What book are you bringing to the Book Signing", target:"__bringing__"},
   {label:"All things book signing", target:"book-signing-plan"},
-  {label:"Link to your Pre-Sale form", target:"presale-link"},
-  {label:"SWAG & Prizes", target:"swag-prizes"},
-  {label:"How do I get my SWAG and/or Books to you?", target:"dropoff"}
+  {label:"Link to your Presale form", target:"presale-link"},
+  {label:"Swag", target:"swag"},
+  {label:"Prizes", target:"prizes"},
+  {label:"Address for mailing/dropping off swag & donations", target:"dropoff"}
 ];
 
 /* QR code templates: matches each Links-section field to its Canva template,
@@ -991,11 +1006,75 @@ async function loadAuthorData(author){
    selling" screens/fields (titlesBringingA for no-presale authors,
    titlesBringingB for presale authors) — now merged into one screen
    using titlesBringingA. Any pre-existing answer saved under
-   titlesBringingB gets folded into titlesBringingA so nothing is lost. */
+   titlesBringingB gets folded into titlesBringingA so nothing is lost.
+   The single 5-option "bookSigningPlan" question was also later split
+   into two separate questions (sellingPlan + presalePlan), and the free
+   text "books you're selling" field became a one-per-line list — this
+   migrates any already-saved answers into the new shape. */
 function migrateBooksSellingField(data){
   if(!data) return;
   if(!data.titlesBringingA && data.titlesBringingB){
     data.titlesBringingA = data.titlesBringingB;
+  }
+  if(!Array.isArray(data.sellingTitlesList) && data.titlesBringingA){
+    data.sellingTitlesList = String(data.titlesBringingA).split("\n").map(s=>s.trim()).filter(Boolean);
+  }
+  if(!data.sellingPlan && data.bookSigningPlan){
+    switch(data.bookSigningPlan){
+      case "Bring a selection of books to sell at the event AND have a presale":
+        data.sellingPlan = "I plan to sell books at the Soirée";
+        data.presalePlan = "Yes";
+        break;
+      case "Bring a selection of books to sell at the event, but NOT have a presale":
+        data.sellingPlan = "I plan to sell books at the Soirée";
+        data.presalePlan = "No";
+        break;
+      case "ONLY a presale, but NOT bring a selection of books to sell at the event.":
+        data.sellingPlan = "I won't be selling books at the Soirée";
+        data.presalePlan = "Yes";
+        break;
+      case "I won't sell books at the Soirée, OR have a presale":
+        data.sellingPlan = "I won't be selling books at the Soirée";
+        data.presalePlan = "No";
+        break;
+      case "Haven't decided yet":
+        data.sellingPlan = "Haven't decided yet";
+        break;
+    }
+  }
+  // The combined "swagPrizePlan" question (4 options covering swag AND
+  // prizes at once) was split into two separate questions/screens.
+  if(!data.swagPlan && !data.prizesPlan && data.swagPrizePlan){
+    switch(data.swagPrizePlan){
+      case "I would LOVE to add some of my swag to the totes AND donate book(s) for prizes!":
+        data.swagPlan = "I'd love to get some of my swag in the totes!";
+        data.prizesPlan = "I'd love to donate some prizes!";
+        break;
+      case "I would LOVE to add some of my swag to the totes, but I'll PASS on donating books for prizes.":
+        data.swagPlan = "I'd love to get some of my swag in the totes!";
+        data.prizesPlan = "I'll pass on donating prizes.";
+        break;
+      case "I would LOVE to donate book(s) for prizes, but I'll PASS on adding swag to the totes.":
+        data.swagPlan = "I'll pass on adding swag to the totes.";
+        data.prizesPlan = "I'd love to donate some prizes!";
+        break;
+      case "I will PASS on adding swag or donating book(s).":
+        data.swagPlan = "I'll pass on adding swag to the totes.";
+        data.prizesPlan = "I'll pass on donating prizes.";
+        break;
+    }
+  }
+  // The "donation-knowledge" question's option wording was also updated,
+  // and the "know how many, not titles" path no longer routes to a
+  // separate donation-numbers screen (the count field now lives inline
+  // on this same screen) — remap any already-saved old-wording answer.
+  const oldKnowledgeMap = {
+    "I already know what book(s) I'm donating, AND how many!": "I know what prizes I'm donating",
+    "I don't have a clue about titles, but I know how many I'll donate.": "I don't know what prizes I'll donate, but I know how many",
+    "I don't have a clue about either, but I'll let you know as soon as I decide.": "I don't know how many right now"
+  };
+  if(data.donationKnowledge && oldKnowledgeMap[data.donationKnowledge]){
+    data.donationKnowledge = oldKnowledgeMap[data.donationKnowledge];
   }
 }
 function freshData(){
@@ -1014,9 +1093,20 @@ let currentScreen = "author-select";
 let currentStepId = null;
 let stepHistory = [];
 let cameFromWhatsLeft = false;
+let cameFromNavSubmenu = false;
+let whatsLeftScrollY = null;
+let sectionScrollToKey = null;
 
-function goToSectionFromChecklist(id){
+function goToSectionFromChecklist(id, scrollToKey){
+  whatsLeftScrollY = window.scrollY;
+  sectionScrollToKey = scrollToKey || null;
   cameFromWhatsLeft = true;
+  cameFromNavSubmenu = false;
+  goToSection(id);
+}
+function goToSectionFromNavSubmenu(id){
+  cameFromNavSubmenu = true;
+  cameFromWhatsLeft = false;
   goToSection(id);
 }
 
@@ -1039,10 +1129,10 @@ function goBackSection(){
   }
 }
 
-function appendMainScreenLink(container){
+function appendMainScreenLink(container, label){
   const mainLink = document.createElement('div');
   mainLink.className = "home-link";
-  mainLink.textContent = "Return to main screen";
+  mainLink.textContent = label || "Return to main screen";
   mainLink.onclick = () => { currentAuthor = null; currentData = null; currentScreen = "author-select"; render(); };
   container.appendChild(mainLink);
 }
@@ -1068,9 +1158,25 @@ function render(){
   else if(currentScreen === "admin") renderAdmin();
   else if(currentScreen === "edit-authors") renderEditAuthors();
   else if(currentScreen === "whats-left") renderWhatsLeft();
+  else if(currentScreen === "continue-complete") renderContinueComplete();
+  else if(currentScreen === "fix-links") renderFixLinks();
   else if(currentScreen === "qr-preview") renderQrPreview();
   else if(currentScreen === "section") renderSection();
-  window.scrollTo(0, 0);
+  if(currentScreen === "whats-left" && whatsLeftScrollY !== null){
+    window.scrollTo(0, whatsLeftScrollY);
+    whatsLeftScrollY = null;
+  } else if(currentScreen === "section" && sectionScrollToKey !== null){
+    const key = sectionScrollToKey;
+    sectionScrollToKey = null;
+    const targetEl = document.querySelector(`[data-key="${key}"]`);
+    if(targetEl){
+      targetEl.scrollIntoView({behavior:"auto", block:"center"});
+    } else {
+      window.scrollTo(0, 0);
+    }
+  } else {
+    window.scrollTo(0, 0);
+  }
 }
 
 function logoLockup(){
@@ -1396,7 +1502,7 @@ function renderWelcome(returning){
     const keepGoing = document.createElement('button');
     keepGoing.className = "btn btn-secondary";
     keepGoing.textContent = "Continue where I left off";
-    keepGoing.onclick = () => { goToSection(currentData.meta.currentStep || "general-info"); };
+    keepGoing.onclick = () => { continueWhereLeftOff(); };
     btnRow.appendChild(keepGoing);
   } else {
     const go = document.createElement('button');
@@ -1434,6 +1540,7 @@ function renderWelcome(returning){
 function renderHome(){
   stepHistory = [];
   cameFromWhatsLeft = false;
+  cameFromNavSubmenu = false;
   app.appendChild(logoLockup());
   const card = document.createElement('div');
   card.className = "card";
@@ -1447,8 +1554,8 @@ function renderHome(){
   const items = [
     {label:"See the welcome message again", action: () => { currentScreen="welcome"; app.innerHTML=""; renderWelcome(true); window.scrollTo(0,0); }},
     {label:"Remind me of the dates & times to put in my calendar", action: () => { currentScreen="dates"; render(); }},
-    {label:"Continue where I left off", action: () => goToSection(currentData.meta.currentStep || "general-info")},
-    {label:"My To-Do List", action: () => { currentScreen="whats-left"; render(); }},
+    {label:"Continue where I left off", action: () => continueWhereLeftOff()},
+    {label:"My To-Do List", action: () => { whatsLeftScrollY = null; currentScreen="whats-left"; render(); }},
     {label:"Preview my QR code sheet", action: () => { currentScreen="qr-preview"; render(); }},
     {label:"List of book(s) I said I was selling at the Soirée", action: () => { currentScreen="lookup-bringing"; render(); }},
     {label:"List of book(s) I am donating", action: () => { currentScreen="lookup-donating"; render(); }},
@@ -1509,6 +1616,13 @@ function donatedTitlesText(){
   if(!Array.isArray(currentData.donatedTitlesList)) return "";
   return currentData.donatedTitlesList.filter(t => t && t.trim() !== "").join("\n");
 }
+function sellingTitlesFilled(){
+  return Array.isArray(currentData.sellingTitlesList) && currentData.sellingTitlesList.some(t => t && t.trim() !== "");
+}
+function sellingTitlesText(){
+  if(!Array.isArray(currentData.sellingTitlesList)) return "";
+  return currentData.sellingTitlesList.filter(t => t && t.trim() !== "").join("\n");
+}
 
 function truncatePreview(str, max){
   if(!str) return "";
@@ -1526,11 +1640,14 @@ function computeChecklist(){
   sections.push({
     title: "General Info",
     rows: [
-      {label:"Full name", done:isFieldFilled("fullName"), required:true, target:"general-info"},
-      {label:"Email address", done:isFieldFilled("email"), required:true, target:"general-info"},
-      {label:"Instagram profile name", done:isFieldFilled("instagram"), required:true, target:"general-info"},
+      {label:"Full name", preview: isFieldFilled("fullName") ? truncatePreview(d.fullName, 40) : null,
+       done:isFieldFilled("fullName"), required:true, target:"general-info"},
+      {label:"Email address", preview: isFieldFilled("email") ? truncatePreview(d.email, 40) : null,
+       done:isFieldFilled("email"), required:true, target:"general-info"},
+      {label:"Instagram profile name", preview: isFieldFilled("instagram") ? truncatePreview(d.instagram, 40) : null,
+       done:isFieldFilled("instagram"), required:true, target:"general-info"},
       {label:"Bio", done:isFieldFilled("bio"), required:true, target:"general-info"},
-      {label:"Headshot", done:isFieldFilled("headshot","file"), required:false, target:"general-info"},
+      {label:"Headshot", done:isFieldFilled("headshot","file"), required:true, target:"general-info"},
       {label:"Your logo", done:isFieldFilled("logo","file"), required:false, optionalTag:true, target:"general-info"},
     ]
   });
@@ -1549,14 +1666,14 @@ function computeChecklist(){
     title: "Misc Fun Stuff!",
     note: "(all optional)",
     rows: [
-      {label:"Fav drink", done:isFieldFilled("drink"), required:false, target:"misc-fun"},
-      {label:"Number of books written", done:isFieldFilled("booksWritten"), required:false, target:"misc-fun"},
-      {label:"Book that lives rent free in your head", done:isFieldFilled("rentFreeBook"), required:false, target:"misc-fun"},
-      {label:"Cheesy musical about your life", done:isFieldFilled("musicalTitle"), required:false, target:"misc-fun"},
-      {label:"Number between 1\u2013100", done:isFieldFilled("numberGuess"), required:false, target:"misc-fun"},
-      {label:"Heroine in any book", done:isFieldFilled("heroineBook"), required:false, target:"misc-fun"},
-      {label:"Reading for pleasure", done:isFieldFilled("readingFormat"), required:false, target:"misc-fun"},
-      {label:"Entry song", done:isFieldFilled("sportsSong"), required:false, target:"misc-fun"},
+      {label:"Fav drink", preview: isFieldFilled("drink") ? truncatePreview(d.drink, 40) : null, done:isFieldFilled("drink"), required:false, target:"misc-fun"},
+      {label:"Number of books written", preview: isFieldFilled("booksWritten") ? truncatePreview(d.booksWritten, 40) : null, done:isFieldFilled("booksWritten"), required:false, target:"misc-fun"},
+      {label:"Book that lives rent free in your head", preview: isFieldFilled("rentFreeBook") ? truncatePreview(d.rentFreeBook, 40) : null, done:isFieldFilled("rentFreeBook"), required:false, target:"misc-fun"},
+      {label:"Cheesy musical about your life", preview: isFieldFilled("musicalTitle") ? truncatePreview(d.musicalTitle, 40) : null, done:isFieldFilled("musicalTitle"), required:false, target:"misc-fun"},
+      {label:"Number between 1\u2013100", preview: isFieldFilled("numberGuess") ? truncatePreview(d.numberGuess, 40) : null, done:isFieldFilled("numberGuess"), required:false, target:"misc-fun"},
+      {label:"Heroine in any book", preview: isFieldFilled("heroineBook") ? truncatePreview(d.heroineBook, 40) : null, done:isFieldFilled("heroineBook"), required:false, target:"misc-fun"},
+      {label:"Reading for pleasure", preview: isFieldFilled("readingFormat") ? truncatePreview(d.readingFormat, 40) : null, done:isFieldFilled("readingFormat"), required:false, target:"misc-fun"},
+      {label:"Entry song", preview: isFieldFilled("sportsSong") ? truncatePreview(d.sportsSong, 40) : null, done:isFieldFilled("sportsSong"), required:false, target:"misc-fun"},
     ]
   });
 
@@ -1570,62 +1687,91 @@ function computeChecklist(){
   sections.push({
     title: "Links",
     note: "(optional \u2014 shared with all attendees)",
-    rows: linkFields.map(([key,label]) => ({ label, done:isFieldFilled(key), required:false, target:"links" }))
+    rows: linkFields.map(([key,label]) => ({ label, done:isFieldFilled(key), required:false, target:"links", scrollToKey:key }))
   });
 
-  // ---- Your Books at the Book Signing ----
-  const planLabels = {
-    "Bring a selection of books to sell at the event AND have a pre-sale":"Selling books & doing a pre-sale",
-    "Bring a selection of books to sell at the event, but NOT have a pre-sale":"Selling books, no pre-sale",
-    "ONLY a pre-sale, but NOT bring a selection of books to sell at the event.":"Pre-sale only",
-    "I won't sell books at the Soirée, OR have a pre-sale":"Not selling or pre-selling",
-    "Haven't decided yet":"Haven't decided yet"
+  // ---- Selling Books at the Soirée ----
+  const sellingLabels = {
+    "I plan to sell books at the Soirée": "yes",
+    "I won't be selling books at the Soirée": "no",
+    "Haven't decided yet": "undecided"
   };
+  const isUndecidedSelling = d.sellingPlan === "Haven't decided yet";
   sections.push({
-    title: "Your Books at the Book Signing",
+    title: "Selling Books at the Soirée",
     rows: [
-      {label:"Your plan", preview: d.bookSigningPlan ? (planLabels[d.bookSigningPlan] || truncatePreview(d.bookSigningPlan,50)) : null,
-       done:isFieldFilled("bookSigningPlan"), required:true, target:"book-signing-plan"}
+      isUndecidedSelling
+        ? {label:"Selling Books at the Soirée", done:false, declined:true, declinedText:"undecided", target:"book-signing-plan", addLabel:"Decide"}
+        : {label:"Selling Books at the Soirée", preview: d.sellingPlan ? sellingLabels[d.sellingPlan] : null,
+           done:isFieldFilled("sellingPlan"), required:true, target:"book-signing-plan"}
     ]
   });
 
-  // ---- Pre-sale Book Link (only if relevant to their plan) ----
-  const plan = d.bookSigningPlan;
-  const wantsPresale = plan === "Bring a selection of books to sell at the event AND have a pre-sale" || plan === "ONLY a pre-sale, but NOT bring a selection of books to sell at the event.";
-  const declinedPresale = plan === "Bring a selection of books to sell at the event, but NOT have a pre-sale" || plan === "I won't sell books at the Soirée, OR have a pre-sale";
-  if(wantsPresale || declinedPresale){
-    sections.push({
-      title: "Pre-sale Book Link",
-      rows: [
-        declinedPresale
-          ? {label:"Pre-sale link", done:false, declined:true, declinedText:"You chose no pre-sale"}
-          : {label:"Pre-sale link", done:isFieldFilled("presaleLink"), required:false, target:"presale-link"}
-      ]
-    });
+  // ---- Books You Will Sell at the Soirée (only if they're selling) ----
+  if(d.sellingPlan === "I plan to sell books at the Soirée"){
+    const hasSellingTitles = sellingTitlesFilled();
+    let sellRow;
+    if(hasSellingTitles && d.sellingListStatus === "tentative"){
+      sellRow = {label:"Books you will sell at the Soirée", done:true, tentative:true, required:false, target:"books-selling", showEditWhenDone:true, preview:"you said you might update this list"};
+    } else {
+      sellRow = {label:"Titles list", preview: hasSellingTitles ? truncatePreview(sellingTitlesText().replace(/\n/g," / "), 60) : null,
+        done:hasSellingTitles, required:false, target:"books-selling", showEditWhenDone:true, addLabel:"None listed"};
+    }
+    sections.push({ title:"Books You Will Sell at the Soirée", rows:[sellRow] });
   }
 
-  // ---- Books You're Selling at the Book Signing (only if their plan includes selling) ----
-  const sellsBooks = plan === "Bring a selection of books to sell at the event AND have a pre-sale" || plan === "Bring a selection of books to sell at the event, but NOT have a pre-sale";
-  if(sellsBooks){
-    sections.push({
-      title: "Books You're Selling During the Book Signing",
-      rows: [
-        {label:"Titles list", done:isFieldFilled("titlesBringingA"), required:false, target:"books-selling", showEditWhenDone:true, addLabel:"None listed"}
-      ]
-    });
-  }
-
-  // ---- Swag & Prizes ----
+  // ---- Presale plan ----
+  const presaleLabels = { "Yes":"have a presale.", "No":"no presale." };
   sections.push({
-    title: "Swag & Prizes",
+    title: "Presale for the Soirée",
     rows: [
-      {label:"Your swag & prizes choice", done:isFieldFilled("swagPrizePlan"), required:true, target:"swag-prizes", addLabel:"Need to select"}
+      {label:"Your plan", preview: d.presalePlan ? presaleLabels[d.presalePlan] : null,
+       done:isFieldFilled("presalePlan"), required:false, target:"presale-plan"}
+    ]
+  });
+
+  // ---- Presale Book Link (only if they're doing a presale) ----
+  if(d.presalePlan === "Yes"){
+    let linkRow;
+    if(d.presaleFormChoice === "I am going to make my own form, but don't have a link for it yet" && !isFieldFilled("presaleLink")){
+      linkRow = {label:"Presale Book Link", done:false, declined:true, declinedText:"still need to add", target:"presale-link"};
+    } else if(d.presaleFormChoice === "Please send me your form that I can personalize" && !isFieldFilled("presaleLink")){
+      linkRow = {label:"Presale Book Link", done:true, required:false, target:"presale-link", showEditWhenDone:true, preview:"using the Soirée form. I will have it finished by Mar 1."};
+    } else {
+      linkRow = {label:"Presale Book Link", preview: isFieldFilled("presaleLink") ? truncatePreview(currentData.presaleLink,50) : null,
+        done:isFieldFilled("presaleLink"), required:false, target:"presale-link", showEditWhenDone:true, addLabel:"Need to select"};
+    }
+    sections.push({ title:"Presale Book Link", rows:[linkRow] });
+  } else if(d.presalePlan === "No"){
+    sections.push({
+      title: "Presale Book Link",
+      rows: [ {label:"Presale link", done:false, declined:true, declinedText:"you chose no presale"} ]
+    });
+  }
+
+  // ---- Swag ----
+  const swagLabels = { "I'd love to get some of my swag in the totes!":"yes", "I'll pass on adding swag to the totes.":"no" };
+  sections.push({
+    title: "Swag",
+    rows: [
+      {label:"Swag", preview: d.swagPlan ? swagLabels[d.swagPlan] : null,
+       done:isFieldFilled("swagPlan"), required:true, target:"swag", addLabel:"Need to select"}
+    ]
+  });
+
+  // ---- Prizes ----
+  const prizesLabels = { "I'd love to donate some prizes!":"yes", "I'll pass on donating prizes.":"no" };
+  sections.push({
+    title: "Prizes",
+    rows: [
+      {label:"Prizes", preview: d.prizesPlan ? prizesLabels[d.prizesPlan] : null,
+       done:isFieldFilled("prizesPlan"), required:true, target:"prizes", addLabel:"Need to select"}
     ]
   });
 
   // ---- Donated Books (only if they opted in) ----
-  const wantsDonate = d.swagPrizePlan === "I would LOVE to add some of my swag to the totes AND donate book(s) for prizes!" || d.swagPrizePlan === "I would LOVE to donate book(s) for prizes, but I'll PASS on adding swag to the totes.";
-  const declinedDonate = d.swagPrizePlan === "I would LOVE to add some of my swag to the totes, but I'll PASS on donating books for prizes." || d.swagPrizePlan === "I will PASS on adding swag or donating book(s).";
+  const wantsDonate = d.prizesPlan === "I'd love to donate some prizes!";
+  const declinedDonate = d.prizesPlan === "I'll pass on donating prizes.";
   if(wantsDonate || declinedDonate){
     let row;
     if(declinedDonate){
@@ -1635,8 +1781,10 @@ function computeChecklist(){
       const hasCount = isFieldFilled("donatedCount");
       if(hasTitles && d.donationListStatus === "tentative"){
         row = {label:"Prizes you are donating", done:true, tentative:true, required:false, target:"donation-titles", showEditWhenDone:true, preview:"you said you might update this"};
-      } else if(hasTitles || hasCount){
-        row = {label:"Donated books", done:true, required:false, target: hasTitles ? "donation-titles" : "donation-numbers", showEditWhenDone:true};
+      } else if(hasTitles){
+        row = {label:"Donated books", preview: truncatePreview(donatedTitlesText().replace(/\n/g," / "), 60), done:true, required:false, target:"donation-titles", showEditWhenDone:true};
+      } else if(hasCount){
+        row = {label:"Donated books", preview: truncatePreview(d.donatedCount, 60), done:true, required:false, target:"donation-knowledge", showEditWhenDone:true};
       } else {
         row = {label:"Donated books", done:false, required:false, target:"donation-knowledge", addLabel:"Have not added"};
       }
@@ -1645,12 +1793,18 @@ function computeChecklist(){
   }
 
   // ---- Drop-off method (only relevant once swag/prizes has been decided) ----
-  const dropoffRelevant = d.swagPrizePlan && d.swagPrizePlan !== "I will PASS on adding swag or donating book(s).";
+  const dropoffRelevant = d.swagPlan === "I'd love to get some of my swag in the totes!" || d.prizesPlan === "I'd love to donate some prizes!";
   if(dropoffRelevant){
+    const dropoffPreviewLabels = {
+      "Take it to Lynette": "Drop off to Lynette",
+      "Take it to Nicole": "Drop off to Nicole",
+      "Mail it to Nicole": "Mail to Nicole"
+    };
     sections.push({
-      title: "How Do I Get My Books & SWAG to You?",
+      title: "Getting My Books & Swag to You",
       rows: [
-        {label:"Drop-off / mailing method", done:isFieldFilled("dropoffMethod"), required:true, target:"dropoff", addLabel:"Need to select"}
+        {label:"Drop-off/mailing method", preview: d.dropoffMethod ? (dropoffPreviewLabels[d.dropoffMethod] || truncatePreview(d.dropoffMethod,50)) : null,
+         done:isFieldFilled("dropoffMethod"), required:true, target:"dropoff", addLabel:"Need to select"}
       ]
     });
   }
@@ -1673,7 +1827,7 @@ function renderChecklistRow(container, row){
   const labelWrap = document.createElement('span');
   labelWrap.className = "checklist-label";
   const labelSpan = document.createElement('span');
-  labelSpan.textContent = row.label;
+  labelSpan.textContent = row.label + (row.required ? " *" : "");
   labelWrap.appendChild(labelSpan);
   if(row.preview){
     const prev = document.createElement('span');
@@ -1694,35 +1848,81 @@ function renderChecklistRow(container, row){
     const btn = document.createElement('button');
     btn.className = "checklist-add-btn";
     btn.textContent = row.addLabel || "Add";
-    btn.onclick = (e) => { e.stopPropagation(); goToSectionFromChecklist(row.target); };
+    btn.onclick = (e) => { e.stopPropagation(); goToSectionFromChecklist(row.target, row.scrollToKey); };
     el.appendChild(btn);
     el.style.cursor = "pointer";
-    el.onclick = () => goToSectionFromChecklist(row.target);
+    el.onclick = () => goToSectionFromChecklist(row.target, row.scrollToKey);
+  } else if(!row.done && row.declined && row.target){
+    const btn = document.createElement('button');
+    btn.className = "checklist-add-btn";
+    btn.textContent = row.addLabel || "Decide";
+    btn.onclick = (e) => { e.stopPropagation(); goToSectionFromChecklist(row.target, row.scrollToKey); };
+    el.appendChild(btn);
+    el.style.cursor = "pointer";
+    el.onclick = () => goToSectionFromChecklist(row.target, row.scrollToKey);
   } else if(row.done && row.showEditWhenDone && row.target){
     const btn = document.createElement('button');
     btn.className = "checklist-edit-btn";
     btn.textContent = "Edit";
-    btn.onclick = (e) => { e.stopPropagation(); goToSectionFromChecklist(row.target); };
+    btn.onclick = (e) => { e.stopPropagation(); goToSectionFromChecklist(row.target, row.scrollToKey); };
     el.appendChild(btn);
     el.style.cursor = "pointer";
-    el.onclick = () => goToSectionFromChecklist(row.target);
+    el.onclick = () => goToSectionFromChecklist(row.target, row.scrollToKey);
   } else if(row.done && row.target){
     el.style.cursor = "pointer";
-    el.onclick = () => goToSectionFromChecklist(row.target);
+    el.onclick = () => goToSectionFromChecklist(row.target, row.scrollToKey);
   }
 
   container.appendChild(el);
 }
 
+function continueWhereLeftOff(){
+  if(currentData.meta.currentStep === "done"){
+    currentScreen = "continue-complete";
+    render();
+  } else {
+    goToSection(currentData.meta.currentStep || "general-info");
+  }
+}
+
+function renderContinueComplete(){
+  app.appendChild(logoLockup());
+  const card = document.createElement('div');
+  card.className = "card";
+  card.innerHTML = `
+    <div class="eyebrow">Nice Work</div>
+    <h1 class="section-title"><img src="${FLOURISH.heart}"> You've Been Through the Entire Form!</h1>
+    <div class="section-sub" style="font-size:14.5px;">Want to see if there's anything still marked as missing?</div>
+  `;
+  const btnRow = document.createElement('div');
+  btnRow.className = "btn-row";
+  const showBtn = document.createElement('button');
+  showBtn.className = "btn btn-primary btn-compact";
+  showBtn.textContent = "Show me what I'm missing";
+  showBtn.onclick = () => { whatsLeftScrollY = null; currentScreen = "whats-left"; render(); };
+  btnRow.appendChild(showBtn);
+  card.appendChild(btnRow);
+
+  const link = document.createElement('div');
+  link.className = "home-link";
+  link.style.marginTop = "20px";
+  link.textContent = "Return to home screen";
+  link.onclick = () => { currentScreen = "home"; render(); };
+  card.appendChild(link);
+  appendMainScreenLink(card);
+  app.appendChild(card);
+}
+
 function renderWhatsLeft(){
   cameFromWhatsLeft = false;
+  cameFromNavSubmenu = false;
   app.appendChild(logoLockup());
   const card = document.createElement('div');
   card.className = "card";
   card.innerHTML = `
     <div class="eyebrow">Quick Check</div>
     <h1 class="section-title">My To-Do List</h1>
-    <div class="section-sub">Tap "Add" (or any row) to jump straight there. Everything not marked required is optional.</div>
+    <div class="section-sub">Tap "Add" (or any row) to jump straight there.</div>
   `;
 
   const sections = computeChecklist();
@@ -1734,7 +1934,7 @@ function renderWhatsLeft(){
   }));
   const summary = document.createElement('div');
   summary.className = "checklist-summary";
-  summary.innerHTML = `You've completed <span class="count">${requiredDone} of ${requiredTotal}</span> required tasks. Everything else on this list is optional.`;
+  summary.innerHTML = `You've completed <span class="count">${requiredDone} of ${requiredTotal}</span> required tasks.<br>Only items marked with an * are required.`;
   card.appendChild(summary);
 
   sections.forEach(section => {
@@ -1763,14 +1963,17 @@ function renderLookup(kind){
   app.appendChild(logoLockup());
   const card = document.createElement('div');
   card.className = "card";
-  let title, content, empty=false, needsTitles=false;
+  let title, content, empty=false, needsTitles=false, tentative=false, emptyTarget=null;
+
   if(kind === "bringing"){
     title = "Books You're Selling at the Soirée";
-    const plan = currentData.bookSigningPlan;
-    if(plan === "Bring a selection of books to sell at the event, but NOT have a pre-sale" || plan === "Bring a selection of books to sell at the event AND have a pre-sale"){
-      content = currentData.titlesBringingA || currentData.titlesBringingB;
+    const isSelling = currentData.sellingPlan === "I plan to sell books at the Soirée";
+    if(isSelling && sellingTitlesFilled()){
+      content = sellingTitlesText();
+      tentative = currentData.sellingListStatus === "tentative";
     } else {
       empty = true;
+      emptyTarget = isSelling ? "books-selling" : "book-signing-plan";
     }
   } else {
     title = "Books You're Donating";
@@ -1778,13 +1981,17 @@ function renderLookup(kind){
     const hasCount = isFieldFilled("donatedCount");
     if(hasTitles){
       content = donatedTitlesText();
+      tentative = currentData.donationListStatus === "tentative";
     } else if(hasCount){
       needsTitles = true;
     } else {
       empty = true;
+      emptyTarget = "donation-knowledge";
     }
   }
+
   card.innerHTML = `<div class="eyebrow">Quick Lookup</div><h1 class="section-title">${title}</h1>`;
+
   if(needsTitles){
     const box = document.createElement('div');
     box.className = "info-box";
@@ -1793,23 +2000,42 @@ function renderLookup(kind){
     const addBtn = document.createElement('button');
     addBtn.className = "btn btn-primary btn-compact";
     addBtn.style.marginTop = "16px";
-    addBtn.textContent = "Add my titles";
+    addBtn.textContent = "Add now";
     addBtn.onclick = () => goToSection("donation-titles");
+    card.appendChild(addBtn);
+  } else if(empty){
+    const box = document.createElement('div');
+    box.className = "info-box";
+    box.textContent = "Looks like you haven't told us this yet.";
+    card.appendChild(box);
+    const addBtn = document.createElement('button');
+    addBtn.className = "btn btn-primary btn-compact";
+    addBtn.style.marginTop = "16px";
+    addBtn.textContent = "Add now";
+    addBtn.onclick = () => goToSection(emptyTarget);
     card.appendChild(addBtn);
   } else {
     const box = document.createElement('div');
-    if(empty || !content){
-      box.className = "info-box";
-      const sectionName = kind === "bringing" ? "Your Books at the Book Signing" : "SWAG & Prizes";
-      box.textContent = `Looks like you haven't told us this yet — head to "Go to a specific section" from the home menu and select "${sectionName}".`;
-    } else {
-      box.className = "readonly-box";
-      box.textContent = content;
-    }
+    box.className = "readonly-box";
+    box.textContent = content;
     card.appendChild(box);
+    if(tentative){
+      const tBox = document.createElement('div');
+      tBox.className = "tentative-box";
+      tBox.textContent = "\u26A0 You said you might make edits on this list.";
+      card.appendChild(tBox);
+      const editBtn = document.createElement('button');
+      editBtn.className = "btn btn-primary btn-compact";
+      editBtn.style.marginTop = "8px";
+      editBtn.textContent = "Edit now";
+      editBtn.onclick = () => goToSection(kind === "bringing" ? "books-selling" : "donation-titles");
+      card.appendChild(editBtn);
+    }
   }
+
   const link = document.createElement('div');
   link.className = "home-link";
+  link.style.marginTop = "20px";
   link.textContent = "Return to home";
   link.onclick = () => { currentScreen = "home"; render(); };
   card.appendChild(link);
@@ -1832,12 +2058,9 @@ function renderNavSubmenu(){
     b.onclick = () => {
       let target = item.target;
       if(target === "__bringing__"){
-        const plan = currentData.bookSigningPlan;
-        target = (plan === "Bring a selection of books to sell at the event AND have a pre-sale" || plan === "Bring a selection of books to sell at the event, but NOT have a pre-sale")
-          ? "books-selling"
-          : "book-signing-plan";
+        target = currentData.sellingPlan === "I plan to sell books at the Soirée" ? "books-selling" : "book-signing-plan";
       }
-      goToSection(target);
+      goToSectionFromNavSubmenu(target);
     };
     menu.appendChild(b);
   });
@@ -1979,6 +2202,18 @@ function renderSection(){
     return;
   }
 
+  if(step.customType === "sellingTitles"){
+    app.removeChild(app.lastChild); // remove the logo lockup we just added; renderSellingTitles adds its own
+    renderSellingTitles(step);
+    return;
+  }
+
+  if(step.customType === "donationKnowledge"){
+    app.removeChild(app.lastChild); // remove the logo lockup we just added; renderDonationKnowledge adds its own
+    renderDonationKnowledge(step);
+    return;
+  }
+
   const card = document.createElement('div');
   card.className = "card";
   const titleImg = step.icon ? `<img src="${step.icon}">` : "";
@@ -2069,98 +2304,305 @@ function renderSection(){
   });
   card.appendChild(form);
 
-  const savePrompt = document.createElement('div');
-  savePrompt.className = "save-prompt";
-  savePrompt.textContent = "Save your answers and move to the next section?";
-  card.appendChild(savePrompt);
+  const enteredViaShortcut = cameFromWhatsLeft || cameFromNavSubmenu;
 
-  const btnRow = document.createElement('div');
-  btnRow.className = "btn-row";
-  const back = document.createElement('button');
-  back.className = "btn btn-secondary btn-tiny";
-  back.textContent = "\u2190 Back";
-  back.onclick = async () => {
-    collectFieldValues(step);
-    await saveAuthorData(currentAuthor, currentData);
-    goBackSection();
-  };
-  const saveNext = document.createElement('button');
-  saveNext.className = "btn btn-primary btn-compact";
-  saveNext.textContent = "Yes, save & continue";
-  saveNext.onclick = () => advanceStep(step);
-  const saveExit = document.createElement('button');
-  saveExit.className = "btn btn-secondary btn-tiny";
-  saveExit.textContent = cameFromWhatsLeft ? "Save & return to To-Do list" : "Save & return home";
-  saveExit.onclick = async () => {
-    collectFieldValues(step);
-    if(currentStepId === "links"){
-      const issues = findLinkFormatIssues();
-      if(issues.length){
-        const first = document.querySelector(`[data-key="${issues[0].key}"]`);
-        if(first){
-          first.style.outline = "2px solid var(--terracotta)";
-          first.style.borderRadius = "8px";
-          first.focus();
-          setTimeout(()=>{ first.style.outline = ""; }, 4000);
+  if(!enteredViaShortcut){
+    // Normal linear flow: full "save & continue" verbiage.
+    const savePrompt = document.createElement('div');
+    savePrompt.className = "save-prompt";
+    savePrompt.textContent = "Save your answers and move to the next section?";
+    card.appendChild(savePrompt);
+
+    const btnRow = document.createElement('div');
+    btnRow.className = "btn-row";
+    const back = document.createElement('button');
+    back.className = "btn btn-secondary btn-tiny";
+    back.textContent = "\u2190 Back";
+    back.onclick = async () => {
+      collectFieldValues(step);
+      await saveAuthorData(currentAuthor, currentData);
+      goBackSection();
+    };
+    const saveNext = document.createElement('button');
+    saveNext.className = "btn btn-primary btn-compact";
+    saveNext.textContent = "Yes, save & continue";
+    saveNext.onclick = () => advanceStep(step);
+    const saveExit = document.createElement('button');
+    saveExit.className = "btn btn-secondary btn-tiny";
+    saveExit.textContent = "Save & return to home screen";
+    saveExit.onclick = async () => {
+      collectFieldValues(step);
+      if(currentStepId === "links"){
+        const issues = findLinkFormatIssues();
+        if(issues.length){
+          currentScreen = "fix-links";
+          render();
+          return;
         }
-        showToast(`That doesn't quite look like a full web address — mind double-checking "${issues[0].label}"? It should start with https://`);
+      }
+      await saveAuthorData(currentAuthor, currentData);
+      showToast("Saved!");
+      if(currentStepId === "links"){
+        generateAndUploadQrCodes(currentAuthor, currentData);
+      }
+      currentScreen = "home";
+      render();
+    };
+    btnRow.appendChild(saveNext);
+    card.appendChild(btnRow);
+
+    const btnRowSecondary = document.createElement('div');
+    btnRowSecondary.className = "btn-row";
+    btnRowSecondary.style.marginTop = "20px";
+    btnRowSecondary.appendChild(back);
+    btnRowSecondary.appendChild(saveExit);
+    card.appendChild(btnRowSecondary);
+
+    appendMainScreenLink(card, "Save & return to main screen");
+  } else {
+    // Entered via the To-Do List or "Go to a specific section": skip the
+    // "save & continue" verbiage entirely and just offer the three simple
+    // exits, with the entry-specific one first.
+    const firstLink = document.createElement('div');
+    firstLink.className = "home-link";
+    firstLink.textContent = cameFromWhatsLeft ? "Save & return to To-Do list" : "Save & choose a different section";
+    firstLink.onclick = async () => {
+      collectFieldValues(step);
+      if(currentStepId === "links" && findLinkFormatIssues().length){
+        currentScreen = "fix-links";
+        render();
         return;
       }
-    }
-    await saveAuthorData(currentAuthor, currentData);
-    showToast("Saved!");
-    if(currentStepId === "links"){
-      generateAndUploadQrCodes(currentAuthor, currentData);
-    }
-    if(cameFromWhatsLeft){
+      await saveAuthorData(currentAuthor, currentData);
+      if(cameFromWhatsLeft){
+        cameFromWhatsLeft = false;
+        currentScreen = "whats-left";
+      } else {
+        currentScreen = "nav-submenu";
+      }
+      render();
+    };
+    card.appendChild(firstLink);
+
+    const homeLink = document.createElement('div');
+    homeLink.className = "home-link";
+    homeLink.textContent = "Save & return to home screen";
+    homeLink.onclick = async () => {
+      collectFieldValues(step);
+      if(currentStepId === "links" && findLinkFormatIssues().length){
+        currentScreen = "fix-links";
+        render();
+        return;
+      }
+      await saveAuthorData(currentAuthor, currentData);
       cameFromWhatsLeft = false;
-      currentScreen = "whats-left";
-    } else {
+      cameFromNavSubmenu = false;
       currentScreen = "home";
+      render();
+    };
+    card.appendChild(homeLink);
+
+    appendMainScreenLink(card, "Save & return to main screen");
+
+    // A few screens (the prize donation chain) still need a way to keep
+    // moving forward even when entered as a shortcut, since more than one
+    // screen's worth of info is needed before the "prize" picture is
+    // complete. Keep it grouped with the other directional choices at the
+    // bottom rather than as a separate block up top.
+    if(step.shortcutContinueLabel){
+      const continueBtnRow = document.createElement('div');
+      continueBtnRow.className = "btn-row";
+      continueBtnRow.style.marginTop = "20px";
+      const continueBtn = document.createElement('button');
+      continueBtn.className = "btn btn-primary btn-compact";
+      continueBtn.textContent = step.shortcutContinueLabel;
+      continueBtn.onclick = () => advanceStep(step);
+      continueBtnRow.appendChild(continueBtn);
+      card.appendChild(continueBtnRow);
     }
-    render();
-  };
-  btnRow.appendChild(saveNext);
-  card.appendChild(btnRow);
-
-  const btnRowSecondary = document.createElement('div');
-  btnRowSecondary.className = "btn-row";
-  btnRowSecondary.style.marginTop = "20px";
-  btnRowSecondary.appendChild(back);
-  btnRowSecondary.appendChild(saveExit);
-  card.appendChild(btnRowSecondary);
-
-  const link = document.createElement('div');
-  link.className = "home-link";
-  link.textContent = cameFromWhatsLeft ? "Return to To-Do list" : "Return to home";
-  link.onclick = async () => {
-    collectFieldValues(step);
-    await saveAuthorData(currentAuthor, currentData);
-    if(cameFromWhatsLeft){
-      cameFromWhatsLeft = false;
-      currentScreen = "whats-left";
-    } else {
-      currentScreen = "home";
-    }
-    render();
-  };
-  card.appendChild(link);
-
-  const chooseLink = document.createElement('div');
-  chooseLink.className = "home-link";
-  chooseLink.textContent = "Choose a different section";
-  chooseLink.onclick = async () => {
-    collectFieldValues(step);
-    await saveAuthorData(currentAuthor, currentData);
-    currentScreen = "nav-submenu";
-    render();
-  };
-  card.appendChild(chooseLink);
-
-  appendMainScreenLink(card);
+  }
 
   app.appendChild(card);
   attachAutoAdvance(form);
+}
+
+/* ---------- SCREEN: FIX LINKS ---------- */
+function renderFixLinks(){
+  const step = STEPS["links"];
+  app.appendChild(logoLockup());
+  const card = document.createElement('div');
+  card.className = "card";
+  card.innerHTML = `
+    <div class="eyebrow">Quick Check</div>
+    <h1 class="section-title">Fix Links</h1>
+    <div class="section-sub">It looks like some of your links aren't going to real websites. It's probably just a typo, but let's get them right.</div>
+  `;
+
+  const brokenFields = findLinkFormatIssues();
+  const listWrap = document.createElement('div');
+  card.appendChild(listWrap);
+  const footerWrap = document.createElement('div');
+  card.appendChild(footerWrap);
+
+  function isFieldResolved(key){
+    const v = currentData[key];
+    return !v || v.trim() === "" || isPlausibleUrl(normalizeUrlValue(v));
+  }
+  function allResolved(){
+    return brokenFields.every(f => isFieldResolved(f.key));
+  }
+
+  const enteredViaShortcut = cameFromWhatsLeft || cameFromNavSubmenu;
+
+  function proceedForward(){
+    const nextId = step.next ? step.next(currentData) : "done";
+    currentData.meta.currentStep = nextId;
+    saveAuthorData(currentAuthor, currentData).then(()=>{
+      showToast("Saved!");
+      generateAndUploadQrCodes(currentAuthor, currentData);
+      cameFromWhatsLeft = false;
+      cameFromNavSubmenu = false;
+      goToSection(nextId);
+    });
+  }
+
+  function renderFooter(){
+    footerWrap.innerHTML = "";
+    const resolved = allResolved();
+
+    if(!enteredViaShortcut){
+      // Came from the normal linear flow: the "keep moving forward" button
+      // only appears once everything here is fixed or deferred, but the
+      // save-and-exit options are always available so they're never stuck.
+      if(resolved){
+        const savePrompt = document.createElement('div');
+        savePrompt.className = "save-prompt";
+        savePrompt.textContent = "All fixed! Save your answers and move to the next section?";
+        footerWrap.appendChild(savePrompt);
+
+        const btnRow = document.createElement('div');
+        btnRow.className = "btn-row";
+        const saveNext = document.createElement('button');
+        saveNext.className = "btn btn-primary btn-compact";
+        saveNext.textContent = "Yes, save & continue";
+        saveNext.onclick = () => proceedForward();
+        btnRow.appendChild(saveNext);
+        footerWrap.appendChild(btnRow);
+      } else {
+        const note = document.createElement('div');
+        note.className = "help";
+        note.style.marginBottom = "14px";
+        note.textContent = "Fix or defer the remaining link(s) above to continue forward — or save and come back later using an option below.";
+        footerWrap.appendChild(note);
+      }
+
+      const btnRowSecondary = document.createElement('div');
+      btnRowSecondary.className = "btn-row";
+      btnRowSecondary.style.marginTop = resolved ? "20px" : "0";
+      const saveExit = document.createElement('button');
+      saveExit.className = "btn btn-secondary btn-tiny";
+      saveExit.textContent = "Save & return to home screen";
+      saveExit.onclick = async () => {
+        await saveAuthorData(currentAuthor, currentData);
+        showToast("Saved!");
+        currentScreen = "home";
+        render();
+      };
+      btnRowSecondary.appendChild(saveExit);
+      footerWrap.appendChild(btnRowSecondary);
+
+      appendMainScreenLink(footerWrap, "Save & return to main screen");
+    } else {
+      // Came from the To-Do List or "Go to a specific section": these exits
+      // are always available, regardless of whether every link is resolved.
+      const firstLink = document.createElement('div');
+      firstLink.className = "home-link";
+      firstLink.textContent = cameFromWhatsLeft ? "Save & return to To-Do list" : "Save & choose a different section";
+      firstLink.onclick = async () => {
+        await saveAuthorData(currentAuthor, currentData);
+        if(cameFromWhatsLeft){
+          cameFromWhatsLeft = false;
+          currentScreen = "whats-left";
+        } else {
+          currentScreen = "nav-submenu";
+        }
+        render();
+      };
+      footerWrap.appendChild(firstLink);
+
+      const homeLink = document.createElement('div');
+      homeLink.className = "home-link";
+      homeLink.textContent = "Save & return to home screen";
+      homeLink.onclick = async () => {
+        await saveAuthorData(currentAuthor, currentData);
+        cameFromWhatsLeft = false;
+        cameFromNavSubmenu = false;
+        currentScreen = "home";
+        render();
+      };
+      footerWrap.appendChild(homeLink);
+
+      appendMainScreenLink(footerWrap, "Save & return to main screen");
+    }
+  }
+
+  brokenFields.forEach((f, idx)=>{
+    const originalValue = currentData[f.key];
+    const row = document.createElement('div');
+    row.className = "field";
+    row.style.marginBottom = "22px";
+
+    const label = document.createElement('label');
+    label.textContent = f.label;
+    row.appendChild(label);
+
+    const typed = document.createElement('div');
+    typed.className = "help";
+    typed.style.marginTop = "-2px";
+    typed.style.marginBottom = "8px";
+    typed.textContent = `You entered: ${originalValue}`;
+    row.appendChild(typed);
+
+    const inp = document.createElement('input');
+    inp.type = "url";
+    inp.setAttribute('data-key', f.key);
+    inp.value = originalValue;
+    inp.placeholder = "https://";
+    inp.addEventListener('input', ()=>{
+      currentData[f.key] = inp.value;
+      renderFooter();
+    });
+    inp.addEventListener('blur', ()=>{
+      const normalized = normalizeUrlValue(inp.value);
+      if(normalized !== inp.value){
+        inp.value = normalized;
+        currentData[f.key] = normalized;
+        renderFooter();
+      }
+    });
+    row.appendChild(inp);
+
+    const laterBtn = document.createElement('button');
+    laterBtn.className = "btn btn-secondary btn-tiny";
+    laterBtn.style.marginTop = "10px";
+    laterBtn.textContent = "Fix this later";
+    laterBtn.onclick = () => {
+      currentData[f.key] = "";
+      inp.value = "";
+      renderFooter();
+      const nextUnresolved = brokenFields.slice(idx+1).find(nf => !isFieldResolved(nf.key));
+      if(nextUnresolved){
+        const nextInput = listWrap.querySelector(`[data-key="${nextUnresolved.key}"]`);
+        if(nextInput) nextInput.focus();
+      }
+    };
+    row.appendChild(laterBtn);
+
+    listWrap.appendChild(row);
+  });
+
+  renderFooter();
+  app.appendChild(card);
 }
 
 /* ---------- SCREEN: LINK VERIFICATION ---------- */
@@ -2172,183 +2614,207 @@ function linkVerificationFields(){
 
 function renderLinkVerification(step){
   currentData.meta.linkVerification = currentData.meta.linkVerification || {};
-  app.appendChild(logoLockup());
-  const card = document.createElement('div');
-  card.className = "card";
-  card.innerHTML = `
-    <div class="eyebrow">Quick Check</div>
-    <h1 class="section-title">Link Verification</h1>
-    <div class="section-sub">Let's make sure all those links go where you want them to.</div>
-    <div class="info-box">Click each address and it will open in a new window. Then come right back here and let me know if it looks right. If it is, select <strong>IT'S RIGHT</strong>. If not, <strong>LET'S FIX IT</strong>.</div>
-  `;
 
-  const fields = linkVerificationFields();
+  function rebuild(scrollTargetKey){
+    app.innerHTML = "";
+    app.appendChild(logoLockup());
+    const card = document.createElement('div');
+    card.className = "card";
+    card.innerHTML = `
+      <div class="eyebrow">Quick Check</div>
+      <h1 class="section-title">Link Verification</h1>
+      <div class="section-sub">Let's make sure all of your links work.</div>
+      <div class="info-box">Click each address (it will open in a new window). Come right back here and let me know if it looks right.</div>
+    `;
 
-  if(!fields.length){
-    const empty = document.createElement('div');
-    empty.className = "info-box";
-    empty.textContent = "You didn't add any links back on the Links page, so there's nothing to verify here — nice and easy!";
-    card.appendChild(empty);
-  }
+    const fields = linkVerificationFields();
 
-  const list = document.createElement('div');
-  list.style.cssText = "margin-top:10px;";
-
-  fields.forEach(f=>{
-    const status = currentData.meta.linkVerification[f.key]; // 'verified' | 'deferred' | undefined
-    const row = document.createElement('div');
-    row.style.cssText = "padding:14px 4px;border-bottom:1px solid rgba(12,30,61,0.08);";
-
-    const topLine = document.createElement('div');
-    topLine.style.cssText = "display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;";
-    const label = document.createElement('div');
-    label.style.cssText = "font-family:'Montserrat',sans-serif;font-weight:700;font-size:13px;color:var(--navy);";
-    label.textContent = f.label;
-    topLine.appendChild(label);
-
-    if(status === "verified"){
-      const badge = document.createElement('span');
-      badge.style.cssText = "font-family:'Montserrat',sans-serif;font-size:11px;font-weight:700;color:#fff;background:var(--sage);padding:4px 10px;border-radius:999px;";
-      badge.textContent = "\u2713 VERIFIED";
-      topLine.appendChild(badge);
-    } else if(status === "deferred"){
-      const badge = document.createElement('span');
-      badge.style.cssText = "font-family:'Montserrat',sans-serif;font-size:11px;font-weight:700;color:var(--terracotta);background:var(--peach);padding:4px 10px;border-radius:999px;opacity:.75;";
-      badge.textContent = "DEFERRED";
-      topLine.appendChild(badge);
+    if(!fields.length){
+      const empty = document.createElement('div');
+      empty.className = "info-box";
+      empty.textContent = "You didn't add any links back on the Links page, so there's nothing to verify here — nice and easy!";
+      card.appendChild(empty);
     }
-    row.appendChild(topLine);
 
-    if(linkVerificationEditingKey === f.key){
-      const editWrap = document.createElement('div');
-      editWrap.style.cssText = "margin-top:8px;";
-      const input = document.createElement('input');
-      input.type = "text";
-      input.value = currentData[f.key] || "";
-      input.style.cssText = "width:100%;padding:10px;border:1.5px solid rgba(12,30,61,0.2);border-radius:8px;font-family:'Lora',serif;font-size:14.5px;margin-bottom:8px;";
-      editWrap.appendChild(input);
-      const saveBtn = document.createElement('button');
-      saveBtn.className = "btn btn-primary btn-tiny";
-      saveBtn.textContent = "Save this link";
-      saveBtn.onclick = async () => {
-        const val = input.value.trim();
-        if(val && !isPlausibleUrl(val)){
-          showToast("That doesn't quite look like a full web address — it should start with https://");
-          return;
-        }
-        currentData[f.key] = val;
-        delete currentData.meta.linkVerification[f.key]; // needs re-verifying
-        linkVerificationEditingKey = null;
-        await saveAuthorData(currentAuthor, currentData);
-        render();
-      };
-      editWrap.appendChild(saveBtn);
-      row.appendChild(editWrap);
-    } else {
-      const linkLine = document.createElement('a');
-      linkLine.href = currentData[f.key];
-      linkLine.target = "_blank";
-      linkLine.rel = "noopener";
-      linkLine.textContent = currentData[f.key];
-      linkLine.style.cssText = "display:block;font-family:'Lora',serif;font-size:13.5px;color:var(--terracotta);word-break:break-all;margin:6px 0 10px;text-decoration:underline;";
-      row.appendChild(linkLine);
+    const list = document.createElement('div');
+    list.style.cssText = "margin-top:10px;";
 
-      const btnRow = document.createElement('div');
-      btnRow.style.cssText = "display:flex;gap:8px;flex-wrap:wrap;";
+    fields.forEach(f=>{
+      const status = currentData.meta.linkVerification[f.key]; // 'verified' | 'deferred' | undefined
+      const row = document.createElement('div');
+      row.setAttribute('data-verify-key', f.key);
+      row.style.cssText = "padding:14px 4px;border-bottom:1px solid rgba(12,30,61,0.08);";
 
-      const rightBtn = document.createElement('button');
-      rightBtn.className = "btn btn-tiny";
-      rightBtn.style.cssText = "background:var(--sage);color:#fff;border:none;";
-      rightBtn.textContent = "IT'S RIGHT";
-      rightBtn.onclick = async () => {
-        currentData.meta.linkVerification[f.key] = "verified";
-        await saveAuthorData(currentAuthor, currentData);
-        render();
-      };
-      btnRow.appendChild(rightBtn);
+      const topLine = document.createElement('div');
+      topLine.style.cssText = "display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;";
+      const label = document.createElement('div');
+      label.style.cssText = "font-family:'Montserrat',sans-serif;font-weight:700;font-size:13px;color:var(--navy);display:flex;align-items:center;gap:6px;";
+      if(status === "verified"){
+        const check = document.createElement('span');
+        check.style.cssText = "color:var(--sage);font-weight:900;";
+        check.textContent = "\u2713";
+        label.appendChild(check);
+      }
+      const labelText = document.createElement('span');
+      labelText.textContent = f.label;
+      label.appendChild(labelText);
+      topLine.appendChild(label);
 
-      const fixBtn = document.createElement('button');
-      fixBtn.className = "btn btn-secondary btn-tiny";
-      fixBtn.textContent = "LET'S FIX IT";
-      fixBtn.onclick = () => { linkVerificationEditingKey = f.key; render(); };
-      btnRow.appendChild(fixBtn);
+      if(status === "verified"){
+        const badge = document.createElement('span');
+        badge.style.cssText = "font-family:'Montserrat',sans-serif;font-size:11px;font-weight:700;color:#fff;background:var(--sage);padding:4px 10px;border-radius:999px;";
+        badge.textContent = "\u2713 VERIFIED";
+        topLine.appendChild(badge);
+      } else if(status === "deferred"){
+        const badge = document.createElement('span');
+        badge.style.cssText = "font-family:'Montserrat',sans-serif;font-size:11px;font-weight:700;color:var(--terracotta);background:var(--peach);padding:4px 10px;border-radius:999px;opacity:.75;";
+        badge.textContent = "DEFERRED";
+        topLine.appendChild(badge);
+      }
+      row.appendChild(topLine);
 
-      if(status !== "deferred"){
-        const laterLink = document.createElement('span');
-        laterLink.className = "home-link";
-        laterLink.style.cssText = "align-self:center;margin:0;";
-        laterLink.textContent = "I'll fix this later";
-        laterLink.onclick = async () => {
-          currentData.meta.linkVerification[f.key] = "deferred";
+      if(linkVerificationEditingKey === f.key){
+        const editWrap = document.createElement('div');
+        editWrap.style.cssText = "margin-top:8px;";
+        const input = document.createElement('input');
+        input.type = "text";
+        input.value = currentData[f.key] || "";
+        input.style.cssText = "width:100%;padding:10px;border:1.5px solid rgba(12,30,61,0.2);border-radius:8px;font-family:'Lora',serif;font-size:14.5px;margin-bottom:8px;";
+        editWrap.appendChild(input);
+        const saveBtn = document.createElement('button');
+        saveBtn.className = "btn btn-primary btn-tiny";
+        saveBtn.textContent = "Save this link";
+        saveBtn.onclick = async () => {
+          const val = input.value.trim();
+          if(val && !isPlausibleUrl(val)){
+            showToast("That doesn't quite look like a full web address — it should start with https://");
+            return;
+          }
+          currentData[f.key] = val;
+          delete currentData.meta.linkVerification[f.key]; // needs re-verifying
+          linkVerificationEditingKey = null;
           await saveAuthorData(currentAuthor, currentData);
-          render();
+          rebuild(f.key);
         };
-        btnRow.appendChild(laterLink);
+        editWrap.appendChild(saveBtn);
+        row.appendChild(editWrap);
+      } else {
+        const linkLine = document.createElement('a');
+        linkLine.href = currentData[f.key];
+        linkLine.target = "_blank";
+        linkLine.rel = "noopener";
+        linkLine.textContent = currentData[f.key];
+        linkLine.style.cssText = "display:block;font-family:'Lora',serif;font-size:13.5px;color:var(--terracotta);word-break:break-all;margin:6px 0 10px;text-decoration:underline;";
+        row.appendChild(linkLine);
+
+        const btnRow = document.createElement('div');
+        btnRow.style.cssText = "display:flex;gap:8px;flex-wrap:wrap;";
+
+        const rightBtn = document.createElement('button');
+        rightBtn.className = "btn btn-tiny";
+        rightBtn.style.cssText = "background:var(--sage);color:#fff;border:none;";
+        rightBtn.textContent = "IT'S RIGHT";
+        rightBtn.onclick = () => handleDecision(f.key, "verified");
+        btnRow.appendChild(rightBtn);
+
+        const fixBtn = document.createElement('button');
+        fixBtn.className = "btn btn-secondary btn-tiny";
+        fixBtn.textContent = "LET'S FIX IT";
+        fixBtn.onclick = () => { linkVerificationEditingKey = f.key; rebuild(f.key); };
+        btnRow.appendChild(fixBtn);
+
+        if(status !== "deferred"){
+          const laterBtn = document.createElement('button');
+          laterBtn.className = "btn btn-secondary btn-tiny";
+          laterBtn.textContent = "It's not right, but let's fix this later";
+          laterBtn.onclick = () => handleDecision(f.key, "deferred");
+          btnRow.appendChild(laterBtn);
+        }
+
+        row.appendChild(btnRow);
       }
 
-      row.appendChild(btnRow);
-    }
+      list.appendChild(row);
+    });
+    card.appendChild(list);
 
-    list.appendChild(row);
-  });
-  card.appendChild(list);
+    const unresolvedCount = fields.filter(f => !currentData.meta.linkVerification[f.key]).length;
 
-  const unresolvedCount = fields.filter(f => !currentData.meta.linkVerification[f.key]).length;
+    const savePrompt = document.createElement('div');
+    savePrompt.className = "save-prompt";
+    savePrompt.textContent = unresolvedCount
+      ? `${unresolvedCount} link${unresolvedCount === 1 ? "" : "s"} still need a decision before continuing.`
+      : "All set — ready to continue?";
+    card.appendChild(savePrompt);
 
-  const savePrompt = document.createElement('div');
-  savePrompt.className = "save-prompt";
-  savePrompt.textContent = unresolvedCount
-    ? `${unresolvedCount} link${unresolvedCount === 1 ? "" : "s"} still need a decision before continuing.`
-    : "All set — ready to continue?";
-  card.appendChild(savePrompt);
+    const btnRow = document.createElement('div');
+    btnRow.className = "btn-row";
+    const saveNext = document.createElement('button');
+    saveNext.className = "btn btn-primary btn-compact";
+    saveNext.textContent = "Yes, save & continue";
+    saveNext.onclick = async () => {
+      if(unresolvedCount > 0){
+        showToast("Just need a decision on the rest of your links first — IT'S RIGHT, LET'S FIX IT, or It's not right, but let's fix this later.");
+        return;
+      }
+      const nextId = step.next ? step.next(currentData) : "done";
+      currentData.meta.currentStep = nextId;
+      await saveAuthorData(currentAuthor, currentData);
+      showToast("Saved!");
+      linkVerificationEditingKey = null;
+      goToSection(nextId);
+    };
+    btnRow.appendChild(saveNext);
+    card.appendChild(btnRow);
 
-  const btnRow = document.createElement('div');
-  btnRow.className = "btn-row";
-  const saveNext = document.createElement('button');
-  saveNext.className = "btn btn-primary btn-compact";
-  saveNext.textContent = "Yes, save & continue";
-  saveNext.onclick = async () => {
-    if(unresolvedCount > 0){
-      showToast("Just need a decision on the rest of your links first — IT'S RIGHT, LET'S FIX IT, or I'll fix this later.");
-      return;
-    }
-    const nextId = step.next ? step.next(currentData) : "done";
-    currentData.meta.currentStep = nextId;
-    await saveAuthorData(currentAuthor, currentData);
-    showToast("Saved!");
-    linkVerificationEditingKey = null;
-    goToSection(nextId);
-  };
-  btnRow.appendChild(saveNext);
-  card.appendChild(btnRow);
+    const link = document.createElement('div');
+    link.className = "home-link";
+    link.textContent = cameFromWhatsLeft ? "Save & return to To-Do list" : "Save & return to home screen";
+    link.onclick = async () => {
+      await saveAuthorData(currentAuthor, currentData);
+      linkVerificationEditingKey = null;
+      if(cameFromWhatsLeft){
+        cameFromWhatsLeft = false;
+        currentScreen = "whats-left";
+      } else {
+        currentScreen = "home";
+      }
+      render();
+    };
+    card.appendChild(link);
 
-  const link = document.createElement('div');
-  link.className = "home-link";
-  link.textContent = cameFromWhatsLeft ? "Save & return to To-Do list" : "Save & return home";
-  link.onclick = async () => {
-    await saveAuthorData(currentAuthor, currentData);
-    linkVerificationEditingKey = null;
-    if(cameFromWhatsLeft){
-      cameFromWhatsLeft = false;
-      currentScreen = "whats-left";
+    const backLink = document.createElement('div');
+    backLink.className = "home-link";
+    backLink.textContent = "\u2190 Back to Links";
+    backLink.onclick = async () => {
+      await saveAuthorData(currentAuthor, currentData);
+      goToSection("links");
+    };
+    card.appendChild(backLink);
+
+    appendMainScreenLink(card, "Save & return to main screen");
+    app.appendChild(card);
+
+    if(scrollTargetKey){
+      const targetEl = list.querySelector(`[data-verify-key="${scrollTargetKey}"]`);
+      if(targetEl){
+        targetEl.scrollIntoView({behavior:"smooth", block:"start"});
+      }
     } else {
-      currentScreen = "home";
+      window.scrollTo(0, 0);
     }
-    render();
-  };
-  card.appendChild(link);
+  }
 
-  const backLink = document.createElement('div');
-  backLink.className = "home-link";
-  backLink.textContent = "\u2190 Back to Links";
-  backLink.onclick = async () => {
+  async function handleDecision(key, status){
+    currentData.meta.linkVerification[key] = status;
     await saveAuthorData(currentAuthor, currentData);
-    goToSection("links");
-  };
-  card.appendChild(backLink);
+    const fields = linkVerificationFields();
+    const idx = fields.findIndex(f => f.key === key);
+    const nextUnresolved = fields.slice(idx+1).find(f => !currentData.meta.linkVerification[f.key]);
+    rebuild(nextUnresolved ? nextUnresolved.key : null);
+  }
 
-  appendMainScreenLink(card);
-  app.appendChild(card);
+  rebuild(null);
 }
 
 /* ---------- SCREEN: DONATED BOOK TITLES (custom) ---------- */
@@ -2363,68 +2829,57 @@ function renderDonationTitles(step){
     <div class="section-sub">${step.sub || ""}</div>
   `;
 
-  if(!Array.isArray(currentData.donatedTitlesList)) currentData.donatedTitlesList = [];
-
-  const countField = document.createElement('div');
-  countField.className = "field";
-  const countLabel = document.createElement('label');
-  countLabel.textContent = "How many different prizes are you donating?";
-  countField.appendChild(countLabel);
-  const countInput = document.createElement('input');
-  countInput.type = "number";
-  countInput.min = "0";
-  countInput.style.maxWidth = "160px";
-  countInput.value = currentData.donationPrizeCount || "";
-  countField.appendChild(countInput);
-  card.appendChild(countField);
+  if(!Array.isArray(currentData.donatedTitlesList) || currentData.donatedTitlesList.length === 0){
+    currentData.donatedTitlesList = [""];
+  }
 
   const entriesWrap = document.createElement('div');
   card.appendChild(entriesWrap);
 
-  const helperField = document.createElement('div');
-  helperField.className = "field";
-  const helperNote = document.createElement('div');
-  helperNote.className = "help";
-  helperNote.style.marginBottom = "0";
-  helperNote.textContent = "Change the number to add/subtract lines.";
-  helperField.appendChild(helperNote);
-  helperField.style.display = "none";
-  card.appendChild(helperField);
-
-  function syncArrayLength(n){
-    const arr = currentData.donatedTitlesList;
-    while(arr.length < n) arr.push("");
-    while(arr.length > n) arr.pop();
+  function inputEls(){
+    return Array.from(entriesWrap.querySelectorAll('input'));
   }
 
-  function renderEntries(n){
+  function renderEntries(focusIdx){
     entriesWrap.innerHTML = "";
-    syncArrayLength(n);
-    for(let i=0;i<n;i++){
+    currentData.donatedTitlesList.forEach((val, i)=>{
       const row = document.createElement('div');
       row.className = "field";
-      row.style.marginBottom = "12px";
+      row.style.marginBottom = "8px";
       const inp = document.createElement('input');
       inp.type = "text";
-      inp.placeholder = "one prize per line";
-      inp.value = currentData.donatedTitlesList[i] || "";
+      inp.placeholder = "Enter a prize";
+      inp.value = val || "";
       inp.addEventListener('input', ()=>{ currentData.donatedTitlesList[i] = inp.value; });
+      inp.addEventListener('keydown', (e)=>{
+        if(e.key === "Enter"){
+          e.preventDefault();
+          currentData.donatedTitlesList[i] = inp.value;
+          if(inp.value.trim() === "") return; // don't chain empty fields
+          if(i === currentData.donatedTitlesList.length - 1){
+            currentData.donatedTitlesList.push("");
+          }
+          renderEntries(i + 1);
+        }
+      });
       row.appendChild(inp);
       entriesWrap.appendChild(row);
+
+      if(i === currentData.donatedTitlesList.length - 1){
+        const hint = document.createElement('div');
+        hint.className = "help";
+        hint.style.cssText = "margin-top:-2px;margin-bottom:14px;";
+        hint.textContent = "Press ENTER to add another prize";
+        entriesWrap.appendChild(hint);
+      }
+    });
+    if(focusIdx !== undefined){
+      const els = inputEls();
+      if(els[focusIdx]) els[focusIdx].focus();
     }
-    helperField.style.display = n > 0 ? "block" : "none";
   }
 
-  let initialCount = parseInt(currentData.donationPrizeCount, 10);
-  if(isNaN(initialCount) || initialCount < 0) initialCount = 0;
-  renderEntries(initialCount);
-
-  countInput.addEventListener('input', ()=>{
-    let n = parseInt(countInput.value, 10);
-    if(isNaN(n) || n < 0) n = 0;
-    currentData.donationPrizeCount = n ? String(n) : "";
-    renderEntries(n);
-  });
+  renderEntries();
 
   const statusField = document.createElement('div');
   statusField.className = "field";
@@ -2451,81 +2906,405 @@ function renderDonationTitles(step){
   statusField.appendChild(statusGroup);
 
   function collectValues(){
-    currentData.donationPrizeCount = countInput.value ? String(parseInt(countInput.value,10) || 0) : "";
+    // Entries are already synced live via each input's 'input' listener.
   }
 
-  const savePrompt = document.createElement('div');
-  savePrompt.className = "save-prompt";
-  savePrompt.textContent = "Save your answers and move to the next section?";
-  card.appendChild(savePrompt);
+  const enteredViaShortcut = cameFromWhatsLeft || cameFromNavSubmenu;
 
-  const btnRow = document.createElement('div');
-  btnRow.className = "btn-row";
-  const back = document.createElement('button');
-  back.className = "btn btn-secondary btn-tiny";
-  back.textContent = "\u2190 Back";
-  back.onclick = async () => {
-    collectValues();
-    await saveAuthorData(currentAuthor, currentData);
-    goBackSection();
-  };
-  const saveNext = document.createElement('button');
-  saveNext.className = "btn btn-primary btn-compact";
-  saveNext.textContent = "Yes, save & continue";
-  saveNext.onclick = () => { collectValues(); advanceStep(step); };
-  const saveExit = document.createElement('button');
-  saveExit.className = "btn btn-secondary btn-tiny";
-  saveExit.textContent = cameFromWhatsLeft ? "Save & return to To-Do list" : "Save & return home";
-  saveExit.onclick = async () => {
-    collectValues();
-    await saveAuthorData(currentAuthor, currentData);
-    showToast("Saved!");
-    if(cameFromWhatsLeft){
-      cameFromWhatsLeft = false;
-      currentScreen = "whats-left";
-    } else {
+  if(!enteredViaShortcut){
+    const savePrompt = document.createElement('div');
+    savePrompt.className = "save-prompt";
+    savePrompt.textContent = "Save your answers and move to the next section?";
+    card.appendChild(savePrompt);
+
+    const btnRow = document.createElement('div');
+    btnRow.className = "btn-row";
+    const back = document.createElement('button');
+    back.className = "btn btn-secondary btn-tiny";
+    back.textContent = "\u2190 Back";
+    back.onclick = async () => {
+      collectValues();
+      await saveAuthorData(currentAuthor, currentData);
+      goBackSection();
+    };
+    const saveNext = document.createElement('button');
+    saveNext.className = "btn btn-primary btn-compact";
+    saveNext.textContent = "Yes, save & continue";
+    saveNext.onclick = () => { collectValues(); advanceStep(step); };
+    const saveExit = document.createElement('button');
+    saveExit.className = "btn btn-secondary btn-tiny";
+    saveExit.textContent = "Save & return to home screen";
+    saveExit.onclick = async () => {
+      collectValues();
+      await saveAuthorData(currentAuthor, currentData);
+      showToast("Saved!");
       currentScreen = "home";
-    }
-    render();
-  };
-  btnRow.appendChild(saveNext);
-  card.appendChild(btnRow);
+      render();
+    };
+    btnRow.appendChild(saveNext);
+    card.appendChild(btnRow);
 
-  const btnRowSecondary = document.createElement('div');
-  btnRowSecondary.className = "btn-row";
-  btnRowSecondary.style.marginTop = "20px";
-  btnRowSecondary.appendChild(back);
-  btnRowSecondary.appendChild(saveExit);
-  card.appendChild(btnRowSecondary);
+    const btnRowSecondary = document.createElement('div');
+    btnRowSecondary.className = "btn-row";
+    btnRowSecondary.style.marginTop = "20px";
+    btnRowSecondary.appendChild(back);
+    btnRowSecondary.appendChild(saveExit);
+    card.appendChild(btnRowSecondary);
 
-  const link = document.createElement('div');
-  link.className = "home-link";
-  link.textContent = cameFromWhatsLeft ? "Return to To-Do list" : "Return to home";
-  link.onclick = async () => {
-    collectValues();
-    await saveAuthorData(currentAuthor, currentData);
-    if(cameFromWhatsLeft){
+    appendMainScreenLink(card, "Save & return to main screen");
+  } else {
+    const firstLink = document.createElement('div');
+    firstLink.className = "home-link";
+    firstLink.textContent = cameFromWhatsLeft ? "Save & return to To-Do list" : "Save & choose a different section";
+    firstLink.onclick = async () => {
+      collectValues();
+      await saveAuthorData(currentAuthor, currentData);
+      if(cameFromWhatsLeft){
+        cameFromWhatsLeft = false;
+        currentScreen = "whats-left";
+      } else {
+        currentScreen = "nav-submenu";
+      }
+      render();
+    };
+    card.appendChild(firstLink);
+
+    const homeLink = document.createElement('div');
+    homeLink.className = "home-link";
+    homeLink.textContent = "Save & return to home screen";
+    homeLink.onclick = async () => {
+      collectValues();
+      await saveAuthorData(currentAuthor, currentData);
       cameFromWhatsLeft = false;
-      currentScreen = "whats-left";
-    } else {
+      cameFromNavSubmenu = false;
       currentScreen = "home";
+      render();
+    };
+    card.appendChild(homeLink);
+
+    appendMainScreenLink(card, "Save & return to main screen");
+  }
+  app.appendChild(card);
+}
+
+/* ---------- SCREEN: BOOKS YOU WILL SELL AT THE SOIRÉE (custom) ---------- */
+function renderSellingTitles(step){
+  app.appendChild(logoLockup());
+  const card = document.createElement('div');
+  card.className = "card";
+  const titleImg = step.icon ? `<img src="${step.icon}">` : "";
+  card.innerHTML = `
+    <div class="eyebrow">Bookish Summer Soirée</div>
+    <h1 class="section-title">${titleImg}${step.title}</h1>
+    <div class="section-sub">${step.sub || ""}</div>
+  `;
+
+  if(!Array.isArray(currentData.sellingTitlesList) || currentData.sellingTitlesList.length === 0){
+    currentData.sellingTitlesList = [""];
+  }
+
+  const entriesWrap = document.createElement('div');
+  card.appendChild(entriesWrap);
+
+  function inputEls(){
+    return Array.from(entriesWrap.querySelectorAll('input'));
+  }
+
+  function renderEntries(focusIdx){
+    entriesWrap.innerHTML = "";
+    currentData.sellingTitlesList.forEach((val, i)=>{
+      const row = document.createElement('div');
+      row.className = "field";
+      row.style.marginBottom = "8px";
+      const inp = document.createElement('input');
+      inp.type = "text";
+      inp.placeholder = "Enter a book title";
+      inp.value = val || "";
+      inp.addEventListener('input', ()=>{ currentData.sellingTitlesList[i] = inp.value; });
+      inp.addEventListener('keydown', (e)=>{
+        if(e.key === "Enter"){
+          e.preventDefault();
+          currentData.sellingTitlesList[i] = inp.value;
+          if(inp.value.trim() === "") return; // don't chain empty fields
+          if(i === currentData.sellingTitlesList.length - 1){
+            currentData.sellingTitlesList.push("");
+          }
+          renderEntries(i + 1);
+        }
+      });
+      row.appendChild(inp);
+      entriesWrap.appendChild(row);
+
+      if(i === currentData.sellingTitlesList.length - 1){
+        const hint = document.createElement('div');
+        hint.className = "help";
+        hint.style.cssText = "margin-top:-2px;margin-bottom:14px;";
+        hint.textContent = "Press ENTER to add another book title";
+        entriesWrap.appendChild(hint);
+      }
+    });
+    if(focusIdx !== undefined){
+      const els = inputEls();
+      if(els[focusIdx]) els[focusIdx].focus();
     }
-    render();
-  };
-  card.appendChild(link);
+  }
 
-  const chooseLink = document.createElement('div');
-  chooseLink.className = "home-link";
-  chooseLink.textContent = "Choose a different section";
-  chooseLink.onclick = async () => {
-    collectValues();
-    await saveAuthorData(currentAuthor, currentData);
-    currentScreen = "nav-submenu";
-    render();
-  };
-  card.appendChild(chooseLink);
+  renderEntries();
 
-  appendMainScreenLink(card);
+  const statusField = document.createElement('div');
+  statusField.className = "field";
+  statusField.style.marginTop = "18px";
+  card.appendChild(statusField);
+
+  const statusGroup = document.createElement('div');
+  statusGroup.className = "radio-group";
+  const statusOptions = [
+    {value:"complete", text:"That is all the books I'll be selling."},
+    {value:"tentative", text:"That is some of the books I'll be selling. I might add more."}
+  ];
+  statusOptions.forEach(opt=>{
+    const optWrap = document.createElement('label');
+    optWrap.className = "radio-option" + (currentData.sellingListStatus===opt.value ? " selected":"");
+    optWrap.innerHTML = `<input type="radio" name="sellingListStatus" value="${opt.value}" ${currentData.sellingListStatus===opt.value?'checked':''}><span>${opt.text}</span>`;
+    optWrap.querySelector('input').addEventListener('change', ()=>{
+      currentData.sellingListStatus = opt.value;
+      statusGroup.querySelectorAll('.radio-option').forEach(el=>el.classList.remove('selected'));
+      optWrap.classList.add('selected');
+    });
+    statusGroup.appendChild(optWrap);
+  });
+  statusField.appendChild(statusGroup);
+
+  const enteredViaShortcut = cameFromWhatsLeft || cameFromNavSubmenu;
+
+  if(!enteredViaShortcut){
+    const savePrompt = document.createElement('div');
+    savePrompt.className = "save-prompt";
+    savePrompt.textContent = "Save your answers and move to the next section?";
+    card.appendChild(savePrompt);
+
+    const btnRow = document.createElement('div');
+    btnRow.className = "btn-row";
+    const back = document.createElement('button');
+    back.className = "btn btn-secondary btn-tiny";
+    back.textContent = "\u2190 Back";
+    back.onclick = async () => {
+      await saveAuthorData(currentAuthor, currentData);
+      goBackSection();
+    };
+    const saveNext = document.createElement('button');
+    saveNext.className = "btn btn-primary btn-compact";
+    saveNext.textContent = "Yes, save & continue";
+    saveNext.onclick = () => advanceStep(step);
+    const saveExit = document.createElement('button');
+    saveExit.className = "btn btn-secondary btn-tiny";
+    saveExit.textContent = "Save & return to home screen";
+    saveExit.onclick = async () => {
+      await saveAuthorData(currentAuthor, currentData);
+      showToast("Saved!");
+      currentScreen = "home";
+      render();
+    };
+    btnRow.appendChild(saveNext);
+    card.appendChild(btnRow);
+
+    const btnRowSecondary = document.createElement('div');
+    btnRowSecondary.className = "btn-row";
+    btnRowSecondary.style.marginTop = "20px";
+    btnRowSecondary.appendChild(back);
+    btnRowSecondary.appendChild(saveExit);
+    card.appendChild(btnRowSecondary);
+
+    appendMainScreenLink(card, "Save & return to main screen");
+  } else {
+    const firstLink = document.createElement('div');
+    firstLink.className = "home-link";
+    firstLink.textContent = cameFromWhatsLeft ? "Save & return to To-Do list" : "Save & choose a different section";
+    firstLink.onclick = async () => {
+      await saveAuthorData(currentAuthor, currentData);
+      if(cameFromWhatsLeft){
+        cameFromWhatsLeft = false;
+        currentScreen = "whats-left";
+      } else {
+        currentScreen = "nav-submenu";
+      }
+      render();
+    };
+    card.appendChild(firstLink);
+
+    const homeLink = document.createElement('div');
+    homeLink.className = "home-link";
+    homeLink.textContent = "Save & return to home screen";
+    homeLink.onclick = async () => {
+      await saveAuthorData(currentAuthor, currentData);
+      cameFromWhatsLeft = false;
+      cameFromNavSubmenu = false;
+      currentScreen = "home";
+      render();
+    };
+    card.appendChild(homeLink);
+
+    appendMainScreenLink(card, "Save & return to main screen");
+  }
+  app.appendChild(card);
+}
+
+/* ---------- SCREEN: DONATION KNOWLEDGE (custom) ---------- */
+function renderDonationKnowledge(step){
+  app.appendChild(logoLockup());
+  const card = document.createElement('div');
+  card.className = "card";
+  const titleImg = step.icon ? `<img src="${step.icon}">` : "";
+  card.innerHTML = `
+    <div class="eyebrow">Bookish Summer Soirée</div>
+    <h1 class="section-title">${titleImg}${step.title}</h1>
+    <div class="section-sub">${step.sub || ""}</div>
+    <div class="info-box">${step.body || ""}</div>
+  `;
+
+  const OPTIONS = [
+    "I don't know what prizes I'll donate, but I know how many",
+    "I know what prizes I'm donating",
+    "I don't know how many right now"
+  ];
+
+  const optionsField = document.createElement('div');
+  optionsField.className = "field";
+  const group = document.createElement('div');
+  group.className = "radio-group";
+
+  const countWrap = document.createElement('div');
+  countWrap.className = "field";
+  countWrap.style.marginTop = "16px";
+  countWrap.style.display = currentData.donationKnowledge === OPTIONS[0] ? "block" : "none";
+  const countLabel = document.createElement('label');
+  countLabel.textContent = "How many prizes will you be donating?";
+  countWrap.appendChild(countLabel);
+  const countInput = document.createElement('input');
+  countInput.type = "number";
+  countInput.inputMode = "numeric";
+  countInput.pattern = "[0-9]*";
+  countInput.style.cssText = "max-width:100px;text-align:center;font-size:20px;";
+  countInput.setAttribute('data-key', 'donatedCount');
+  countInput.value = currentData.donatedCount || "";
+  countInput.addEventListener('input', ()=>{ currentData.donatedCount = countInput.value; });
+  countWrap.appendChild(countInput);
+
+  OPTIONS.forEach(opt=>{
+    const optWrap = document.createElement('label');
+    optWrap.className = "radio-option" + (currentData.donationKnowledge===opt ? " selected":"");
+    optWrap.innerHTML = `<input type="radio" name="donationKnowledge" value="${escapeAttr(opt)}" ${currentData.donationKnowledge===opt?'checked':''}><span>${opt}</span>`;
+    optWrap.querySelector('input').addEventListener('change', ()=>{
+      currentData.donationKnowledge = opt;
+      group.querySelectorAll('.radio-option').forEach(el=>el.classList.remove('selected'));
+      optWrap.classList.add('selected');
+      const showCount = opt === OPTIONS[0];
+      countWrap.style.display = showCount ? "block" : "none";
+      if(showCount){
+        countInput.focus();
+      } else {
+        countInput.value = currentData.donatedCount || "";
+      }
+    });
+    group.appendChild(optWrap);
+  });
+  optionsField.appendChild(group);
+  card.appendChild(optionsField);
+  card.appendChild(countWrap);
+
+  function collectValues(){
+    // currentData.donationKnowledge and donatedCount are already kept in
+    // sync live via the listeners above.
+  }
+
+  const enteredViaShortcut = cameFromWhatsLeft || cameFromNavSubmenu;
+
+  if(!enteredViaShortcut){
+    const savePrompt = document.createElement('div');
+    savePrompt.className = "save-prompt";
+    savePrompt.textContent = "Save your answers and move to the next section?";
+    card.appendChild(savePrompt);
+
+    const btnRow = document.createElement('div');
+    btnRow.className = "btn-row";
+    const back = document.createElement('button');
+    back.className = "btn btn-secondary btn-tiny";
+    back.textContent = "\u2190 Back";
+    back.onclick = async () => {
+      collectValues();
+      await saveAuthorData(currentAuthor, currentData);
+      goBackSection();
+    };
+    const saveNext = document.createElement('button');
+    saveNext.className = "btn btn-primary btn-compact";
+    saveNext.textContent = "Yes, save & continue";
+    saveNext.onclick = () => { collectValues(); advanceStep(step); };
+    const saveExit = document.createElement('button');
+    saveExit.className = "btn btn-secondary btn-tiny";
+    saveExit.textContent = "Save & return to home screen";
+    saveExit.onclick = async () => {
+      collectValues();
+      await saveAuthorData(currentAuthor, currentData);
+      showToast("Saved!");
+      currentScreen = "home";
+      render();
+    };
+    btnRow.appendChild(saveNext);
+    card.appendChild(btnRow);
+
+    const btnRowSecondary = document.createElement('div');
+    btnRowSecondary.className = "btn-row";
+    btnRowSecondary.style.marginTop = "20px";
+    btnRowSecondary.appendChild(back);
+    btnRowSecondary.appendChild(saveExit);
+    card.appendChild(btnRowSecondary);
+
+    appendMainScreenLink(card, "Save & return to main screen");
+  } else {
+    const firstLink = document.createElement('div');
+    firstLink.className = "home-link";
+    firstLink.textContent = cameFromWhatsLeft ? "Save & return to To-Do list" : "Save & choose a different section";
+    firstLink.onclick = async () => {
+      collectValues();
+      await saveAuthorData(currentAuthor, currentData);
+      if(cameFromWhatsLeft){
+        cameFromWhatsLeft = false;
+        currentScreen = "whats-left";
+      } else {
+        currentScreen = "nav-submenu";
+      }
+      render();
+    };
+    card.appendChild(firstLink);
+
+    const homeLink = document.createElement('div');
+    homeLink.className = "home-link";
+    homeLink.textContent = "Save & return to home screen";
+    homeLink.onclick = async () => {
+      collectValues();
+      await saveAuthorData(currentAuthor, currentData);
+      cameFromWhatsLeft = false;
+      cameFromNavSubmenu = false;
+      currentScreen = "home";
+      render();
+    };
+    card.appendChild(homeLink);
+
+    appendMainScreenLink(card, "Save & return to main screen");
+
+    if(step.shortcutContinueLabel){
+      const continueBtnRow = document.createElement('div');
+      continueBtnRow.className = "btn-row";
+      continueBtnRow.style.marginTop = "20px";
+      const continueBtn = document.createElement('button');
+      continueBtn.className = "btn btn-primary btn-compact";
+      continueBtn.textContent = step.shortcutContinueLabel;
+      continueBtn.onclick = () => { collectValues(); advanceStep(step); };
+      continueBtnRow.appendChild(continueBtn);
+      card.appendChild(continueBtnRow);
+    }
+  }
+
   app.appendChild(card);
 }
 
@@ -2912,11 +3691,31 @@ function isPlausibleUrl(str){
   }catch(e){ return false; }
 }
 
+/* If someone types a bare domain (e.g. "google.com" or "Google.com") with
+   no protocol, no spaces, and a recognizable dot, quietly add "https://"
+   for them rather than flagging it as broken. Anything that still doesn't
+   look like a real domain (typos, random text, missing dot) is left alone
+   so the format check can still catch it. */
+function normalizeUrlValue(str){
+  if(!str) return str;
+  const s = str.trim();
+  if(!s) return s;
+  if(/^https?:\/\//i.test(s)) return s;
+  if(!/\s/.test(s) && /^[a-z0-9.-]+\.[a-z]{2,}([/?#].*)?$/i.test(s)){
+    return "https://" + s;
+  }
+  return s;
+}
+
 function findLinkFormatIssues(){
   const step = STEPS["links"];
   const issues = [];
   (step.fields || []).forEach(f=>{
     if(f.type !== "url") return;
+    // Normalize here too (not just in collectFieldValues) so a bare domain
+    // like "google.com" is treated as fine no matter which code path led
+    // here, rather than depending on normalization having already run.
+    if(currentData[f.key]) currentData[f.key] = normalizeUrlValue(currentData[f.key]);
     const val = currentData[f.key];
     if(val && !isPlausibleUrl(val)){
       issues.push(f);
@@ -2933,11 +3732,18 @@ function collectFieldValues(step){
       currentData[f.key] = checked ? checked.value : (currentData[f.key] || null);
     } else {
       const el = document.querySelector(`[data-key="${f.key}"]`);
-      if(el) currentData[f.key] = el.value;
+      if(el) currentData[f.key] = f.type === "url" ? normalizeUrlValue(el.value) : el.value;
     }
   });
   if(currentStepId === "general-info"){
     currentData.meta.generalInfoUpdatedAt = new Date().toISOString();
+  }
+  // If they've switched their presale plan to "No" after previously saying "Yes",
+  // clear out any presale link/form-choice answer so the To-Do list cleanly shows
+  // the "no presale" declined state instead of stale leftover data.
+  if(currentStepId === "presale-plan" && currentData.presalePlan === "No"){
+    currentData.presaleLink = "";
+    currentData.presaleFormChoice = null;
   }
 }
 
@@ -2946,14 +3752,27 @@ async function advanceStep(step){
   if(currentStepId === "links"){
     const issues = findLinkFormatIssues();
     if(issues.length){
-      const first = document.querySelector(`[data-key="${issues[0].key}"]`);
+      currentScreen = "fix-links";
+      render();
+      return;
+    }
+  }
+  if(currentStepId === "presale-link"){
+    const hasLink = currentData.presaleLink && currentData.presaleLink.trim() !== "";
+    const hasChoice = !!currentData.presaleFormChoice;
+    if(!hasLink && !hasChoice){
+      showToast("Please add your presale link, or let us know which of the two options below fits you, before continuing.");
+      return;
+    }
+    if(hasLink && !isPlausibleUrl(currentData.presaleLink.trim())){
+      const first = document.querySelector(`[data-key="presaleLink"]`);
       if(first){
         first.style.outline = "2px solid var(--terracotta)";
         first.style.borderRadius = "8px";
         first.focus();
         setTimeout(()=>{ first.style.outline = ""; }, 4000);
       }
-      showToast(`That doesn't quite look like a full web address — mind double-checking "${issues[0].label}"? It should start with https://`);
+      showToast("That doesn't quite look like a full web address — it should start with https://");
       return;
     }
   }
