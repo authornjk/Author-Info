@@ -146,15 +146,12 @@
   /* ---------- Author select ---------- */
   .author-grid{
     display:grid;
-    grid-auto-flow:column;
-    grid-template-rows:repeat(6, auto);
-    grid-auto-columns:minmax(150px,1fr);
+    grid-template-columns:repeat(2, 1fr);
     gap:12px;
     margin-top:24px;
-    overflow-x:auto;
   }
-  @media (max-width:480px){
-    .author-grid{ grid-template-rows:repeat(9, auto); }
+  @media (min-width:480px){
+    .author-grid{ grid-template-columns:repeat(3, 1fr); }
   }
   .author-tile{
     font-family:'Montserrat',sans-serif;
@@ -173,6 +170,12 @@
     cursor:pointer;
     color:var(--navy);
     transition:all .15s ease;
+  }
+  .author-tile:active,
+  .author-tile-selected{
+    background:var(--terracotta) !important;
+    border-color:var(--terracotta) !important;
+    color:#fff !important;
   }
   @media (hover: hover) {
     .author-tile:hover{
@@ -1292,7 +1295,10 @@ function renderAuthorSelect(){
     const t = document.createElement('div');
     t.className = "author-tile";
     t.textContent = name;
-    t.onclick = () => selectAuthor(name);
+    t.onclick = () => {
+      t.classList.add('author-tile-selected');
+      selectAuthor(name);
+    };
     grid.appendChild(t);
   });
   card.appendChild(grid);
@@ -2403,10 +2409,7 @@ function renderSection(){
     saveNext.className = "btn btn-primary btn-compact";
     saveNext.textContent = "Yes, save & continue";
     saveNext.onclick = () => advanceStep(step);
-    const saveExit = document.createElement('button');
-    saveExit.className = "btn btn-secondary btn-tiny";
-    saveExit.textContent = "Save & return to home screen";
-    saveExit.onclick = async () => {
+    async function saveExitHandler(){
       collectFieldValues(step);
       if(currentStepId === "links"){
         const issues = findLinkFormatIssues();
@@ -2423,7 +2426,7 @@ function renderSection(){
       }
       currentScreen = "home";
       render();
-    };
+    }
     btnRow.appendChild(saveNext);
     card.appendChild(btnRow);
 
@@ -2431,8 +2434,13 @@ function renderSection(){
     btnRowSecondary.className = "btn-row";
     btnRowSecondary.style.marginTop = "20px";
     btnRowSecondary.appendChild(back);
-    btnRowSecondary.appendChild(saveExit);
     card.appendChild(btnRowSecondary);
+
+    const homeLink = document.createElement('div');
+    homeLink.className = "home-link";
+    homeLink.textContent = "Save & return to home screen";
+    homeLink.onclick = saveExitHandler;
+    card.appendChild(homeLink);
 
     appendMainScreenLink(card, "Save & return to main screen");
   } else {
@@ -2597,20 +2605,17 @@ function renderFixLinks(){
         footerWrap.appendChild(note);
       }
 
-      const btnRowSecondary = document.createElement('div');
-      btnRowSecondary.className = "btn-row";
-      btnRowSecondary.style.marginTop = resolved ? "20px" : "0";
-      const saveExit = document.createElement('button');
-      saveExit.className = "btn btn-secondary btn-tiny";
-      saveExit.textContent = "Save & return to home screen";
-      saveExit.onclick = async () => {
+      const homeLink = document.createElement('div');
+      homeLink.className = "home-link";
+      homeLink.textContent = "Save & return to home screen";
+      homeLink.style.marginTop = resolved ? "20px" : "0";
+      homeLink.onclick = async () => {
         await saveAuthorData(currentAuthor, currentData);
         showToast("Saved!");
         currentScreen = "home";
         render();
       };
-      btnRowSecondary.appendChild(saveExit);
-      footerWrap.appendChild(btnRowSecondary);
+      footerWrap.appendChild(homeLink);
 
       appendMainScreenLink(footerWrap, "Save & return to main screen");
     } else {
@@ -3032,16 +3037,13 @@ function renderDonationTitles(step){
     saveNext.className = "btn btn-primary btn-compact";
     saveNext.textContent = "Yes, save & continue";
     saveNext.onclick = () => { collectValues(); advanceStep(step); };
-    const saveExit = document.createElement('button');
-    saveExit.className = "btn btn-secondary btn-tiny";
-    saveExit.textContent = "Save & return to home screen";
-    saveExit.onclick = async () => {
+    async function saveExitHandler(){
       collectValues();
       await saveAuthorData(currentAuthor, currentData);
       showToast("Saved!");
       currentScreen = "home";
       render();
-    };
+    }
     btnRow.appendChild(saveNext);
     card.appendChild(btnRow);
 
@@ -3049,8 +3051,13 @@ function renderDonationTitles(step){
     btnRowSecondary.className = "btn-row";
     btnRowSecondary.style.marginTop = "20px";
     btnRowSecondary.appendChild(back);
-    btnRowSecondary.appendChild(saveExit);
     card.appendChild(btnRowSecondary);
+
+    const homeLink = document.createElement('div');
+    homeLink.className = "home-link";
+    homeLink.textContent = "Save & return to home screen";
+    homeLink.onclick = saveExitHandler;
+    card.appendChild(homeLink);
 
     appendMainScreenLink(card, "Save & return to main screen");
   } else {
@@ -3197,15 +3204,12 @@ function renderSellingTitles(step){
     saveNext.className = "btn btn-primary btn-compact";
     saveNext.textContent = "Yes, save & continue";
     saveNext.onclick = () => advanceStep(step);
-    const saveExit = document.createElement('button');
-    saveExit.className = "btn btn-secondary btn-tiny";
-    saveExit.textContent = "Save & return to home screen";
-    saveExit.onclick = async () => {
+    async function saveExitHandler(){
       await saveAuthorData(currentAuthor, currentData);
       showToast("Saved!");
       currentScreen = "home";
       render();
-    };
+    }
     btnRow.appendChild(saveNext);
     card.appendChild(btnRow);
 
@@ -3213,8 +3217,13 @@ function renderSellingTitles(step){
     btnRowSecondary.className = "btn-row";
     btnRowSecondary.style.marginTop = "20px";
     btnRowSecondary.appendChild(back);
-    btnRowSecondary.appendChild(saveExit);
     card.appendChild(btnRowSecondary);
+
+    const homeLink = document.createElement('div');
+    homeLink.className = "home-link";
+    homeLink.textContent = "Save & return to home screen";
+    homeLink.onclick = saveExitHandler;
+    card.appendChild(homeLink);
 
     appendMainScreenLink(card, "Save & return to main screen");
   } else {
@@ -3340,16 +3349,13 @@ function renderDonationKnowledge(step){
     saveNext.className = "btn btn-primary btn-compact";
     saveNext.textContent = "Yes, save & continue";
     saveNext.onclick = () => { collectValues(); advanceStep(step); };
-    const saveExit = document.createElement('button');
-    saveExit.className = "btn btn-secondary btn-tiny";
-    saveExit.textContent = "Save & return to home screen";
-    saveExit.onclick = async () => {
+    async function saveExitHandler(){
       collectValues();
       await saveAuthorData(currentAuthor, currentData);
       showToast("Saved!");
       currentScreen = "home";
       render();
-    };
+    }
     btnRow.appendChild(saveNext);
     card.appendChild(btnRow);
 
@@ -3357,8 +3363,13 @@ function renderDonationKnowledge(step){
     btnRowSecondary.className = "btn-row";
     btnRowSecondary.style.marginTop = "20px";
     btnRowSecondary.appendChild(back);
-    btnRowSecondary.appendChild(saveExit);
     card.appendChild(btnRowSecondary);
+
+    const homeLink = document.createElement('div');
+    homeLink.className = "home-link";
+    homeLink.textContent = "Save & return to home screen";
+    homeLink.onclick = saveExitHandler;
+    card.appendChild(homeLink);
 
     appendMainScreenLink(card, "Save & return to main screen");
   } else {
