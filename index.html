@@ -1199,6 +1199,7 @@ function render(){
   else if(currentScreen === "lookup-donating") renderLookup("donating");
   else if(currentScreen === "nav-submenu") renderNavSubmenu();
   else if(currentScreen === "graphics") renderGraphics();
+  else if(currentScreen === "admin-login") renderAdminLogin();
   else if(currentScreen === "admin") renderAdmin();
   else if(currentScreen === "edit-authors") renderEditAuthors();
   else if(currentScreen === "whats-left") renderWhatsLeft();
@@ -1315,16 +1316,66 @@ function renderAuthorSelect(){
   const adminLink = document.createElement('div');
   adminLink.textContent = "Admin";
   adminLink.style.cssText = "text-align:center;margin-top:18px;font-family:'Montserrat',sans-serif;font-size:11px;color:#b8bcc4;text-decoration:underline;cursor:pointer;";
-  adminLink.onclick = () => {
-    const pw = prompt("Admin password:");
-    if(pw === null) return;
-    if(pw !== ADMIN_PASSWORD){ alert("Incorrect password."); return; }
-    currentScreen = "admin";
-    render();
-  };
+  adminLink.onclick = () => { currentScreen = "admin-login"; render(); };
   card.appendChild(adminLink);
 
   app.appendChild(card);
+}
+
+/* ---------- SCREEN: ADMIN LOGIN ---------- */
+function renderAdminLogin(){
+  app.appendChild(logoLockup());
+  const card = document.createElement('div');
+  card.className = "card";
+  card.innerHTML = `<div class="eyebrow">Admin</div><h1 class="section-title">Admin Password</h1>`;
+
+  const field = document.createElement('div');
+  field.className = "field";
+  const input = document.createElement('input');
+  input.type = "password";
+  input.placeholder = "Enter password";
+  field.appendChild(input);
+  card.appendChild(field);
+
+  const errorMsg = document.createElement('div');
+  errorMsg.style.cssText = "color:var(--terracotta);font-family:'Montserrat',sans-serif;font-size:13px;margin-top:-10px;margin-bottom:14px;display:none;";
+  errorMsg.textContent = "Incorrect password.";
+  card.appendChild(errorMsg);
+
+  function trySubmit(){
+    if(input.value === ADMIN_PASSWORD){
+      currentScreen = "admin";
+      render();
+    } else {
+      errorMsg.style.display = "block";
+      input.value = "";
+      input.focus();
+    }
+  }
+
+  const btnRow = document.createElement('div');
+  btnRow.className = "btn-row";
+  const submitBtn = document.createElement('button');
+  submitBtn.className = "btn btn-primary btn-compact";
+  submitBtn.textContent = "Enter";
+  submitBtn.onclick = trySubmit;
+  btnRow.appendChild(submitBtn);
+  card.appendChild(btnRow);
+
+  input.addEventListener('keydown', (e)=>{
+    if(e.key === "Enter"){ e.preventDefault(); trySubmit(); }
+  });
+
+  const cancelLink = document.createElement('div');
+  cancelLink.className = "home-link";
+  cancelLink.style.marginTop = "20px";
+  cancelLink.textContent = "Cancel";
+  cancelLink.onclick = () => { currentScreen = "home"; render(); };
+  card.appendChild(cancelLink);
+
+  app.appendChild(card);
+  input.focus();
+  setTimeout(()=>{ input.focus(); }, 50);
 }
 
 /* ---------- SCREEN: ADMIN ---------- */
