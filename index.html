@@ -202,6 +202,9 @@
   }
   @media (hover: hover) { .menu-item:hover{ background:var(--peach); border-color:var(--terracotta); } }
   .menu-item .arrow{ color:var(--terracotta); font-size:18px; }
+  .menu-item-dimmed{ opacity:.55; }
+  .menu-item-dimmed .arrow{ opacity:.7; }
+  .menu-item-suffix{ font-weight:400; font-style:italic; }
 
   /* ---------- Fields ---------- */
   .field{ margin-bottom:22px; }
@@ -683,6 +686,12 @@ const STEPS = {
     next: (d) => {
       if(d.sellingPlan === "I plan to sell books at the Soirée") return "books-selling";
       return "presale-plan";
+    },
+    shortcutDynamicButton: {
+      watchField: "sellingPlan",
+      showWhen: "I plan to sell books at the Soirée",
+      label: "Add list of books you'll be selling",
+      target: "books-selling"
     }
   },
 
@@ -699,7 +708,13 @@ const STEPS = {
     fields: [
       {key:"presalePlan", label:"", type:"radio", required:true, options:["Yes","No"]}
     ],
-    next: (d) => d.presalePlan === "Yes" ? "presale-link" : "swag"
+    next: (d) => d.presalePlan === "Yes" ? "presale-link" : "swag",
+    shortcutDynamicButton: {
+      watchField: "presalePlan",
+      showWhen: "Yes",
+      label: "Add your Presale Link",
+      target: "presale-link"
+    }
   },
 
   "presale-link": {
@@ -750,7 +765,12 @@ const STEPS = {
         "I'll pass on donating prizes."
       ]}
     ],
-    shortcutContinueLabel: "Continue in Prize Section",
+    shortcutDynamicButton: {
+      watchField: "prizesPlan",
+      showWhen: "I'd love to donate some prizes!",
+      label: "Add your prizes",
+      target: "donation-knowledge"
+    },
     next: (d) => {
       if(d.prizesPlan === "I'd love to donate some prizes!") return "donation-knowledge";
       if(d.swagPlan === "I'd love to get some of my swag in the totes!") return "dropoff";
@@ -765,7 +785,6 @@ const STEPS = {
     body: `YOU ARE AN ANGEL!!!! Thank you so much — this is the best help we can get, and it helps keep ticket prices down too.<br><br>
     Since we have to keep track of how many prizes we have (so we know how many more we need), the more important information to get sooner-rather-than-later is <em>how many</em>. The titles can come later. But you might not know either right now, and that's okay too.`,
     customType: "donationKnowledge",
-    shortcutContinueLabel: "Continue in Prize Section",
     next: (d) => {
       if (d.donationKnowledge === "I know what prizes I'm donating") return "donation-titles";
       return "dropoff";
@@ -822,13 +841,27 @@ const NAV_MENU = [
   {label:"Your BINGO Book", target:"bingo-book"},
   {label:"Misc fun stuff!", target:"misc-fun"},
   {label:"Links to places readers can find you", target:"links"},
-  {label:"What book are you bringing to the Book Signing", target:"__bringing__"},
-  {label:"All things book signing", target:"book-signing-plan"},
-  {label:"Link to your Presale form", target:"presale-link"},
+  {label:"Selling Books at the Soirée", target:"__selling__"},
+  {label:"Presale Books for the Soirée", target:"__presale__"},
   {label:"Swag", target:"swag"},
-  {label:"Prizes", target:"prizes"},
-  {label:"Address for mailing/dropping off swag & donations", target:"dropoff"}
+  {label:"Prizes/Donated books", target:"__prizes__"},
+  {label:"Where to mail or drop off swag & prizes", target:"dropoff"},
+  {label:"Social Media & Marketing information", target:"social-media"}
 ];
+
+/* Shared routing helpers: used by both "Go to a specific section" and the
+   My To-Do List rows, so entering these sections from either shortcut
+   behaves consistently. Each returns the most useful screen to land on
+   given what's already been answered. */
+function sellingSectionTarget(){
+  return currentData.sellingPlan === "I plan to sell books at the Soirée" ? "books-selling" : "book-signing-plan";
+}
+function presaleSectionTarget(){
+  return currentData.presalePlan === "Yes" ? "presale-link" : "presale-plan";
+}
+function prizesSectionTarget(){
+  return currentData.prizesPlan === "I'd love to donate some prizes!" ? "donation-knowledge" : "prizes";
+}
 
 /* QR code templates: matches each Links-section field to its Canva template,
    brand color, and output filename. Templates are 1200x1500px (300 DPI, 4x5in).
@@ -888,16 +921,14 @@ const IMPORTANT_DATES = [
     }
   },
   {
-    title:"Your Book Signing Table",
-    details:[
-      "You can set up your table anytime between 10:00am–12:00pm.",
-      "A tablecloth will be provided.",
-      "You will share a banquet table with one of the other authors."
-    ]
-  },
-  {
-    title:"Author Pictures",
-    details:["We will take photos as an author group before the doors open. Those will start at 12:00pm."]
+    title:"Tickets",
+    details:["On sale Monday, March 1 at 10:00am"],
+    ics: {
+      title:"Soirée Tickets Go On Sale",
+      start:"20270301T100000", end:"20270301T103000",
+      details:"Tickets for A Bookish Summer Soirée go on sale today at 10:00am. This event sold out in under an hour last year!",
+      location:""
+    }
   },
   {
     title:"Author Dinner",
@@ -908,6 +939,18 @@ const IMPORTANT_DATES = [
       details:"Author thank-you dinner, hosted by Nicole.",
       location:""
     }
+  },
+  {
+    title:"Author Pictures",
+    details:["We will take photos as an author group before the doors open. Those will start at 12:00pm."]
+  },
+  {
+    title:"Your Book Signing Table",
+    details:[
+      "You can set up your table anytime between 10:00am–12:00pm.",
+      "A tablecloth will be provided.",
+      "You will share a banquet table with one of the other authors."
+    ]
   }
 ];
 
@@ -1148,6 +1191,7 @@ function showToast(msg){
 function render(){
   app.innerHTML = "";
   if(currentScreen === "author-select") renderAuthorSelect();
+  else if(currentScreen === "loading") renderLoading();
   else if(currentScreen === "welcome") renderWelcome();
   else if(currentScreen === "home") renderHome();
   else if(currentScreen === "dates") renderDates(true);
@@ -1443,6 +1487,8 @@ async function resetAllData(){
 
 async function selectAuthor(name){
   currentAuthor = name;
+  currentScreen = "loading";
+  render();
   currentData = await loadAuthorData(name);
   if(!currentData.meta.welcomeSeen){
     currentScreen = "welcome";
@@ -1450,6 +1496,15 @@ async function selectAuthor(name){
     currentScreen = "home";
   }
   render();
+}
+
+function renderLoading(){
+  app.appendChild(logoLockup());
+  const card = document.createElement('div');
+  card.className = "card";
+  card.style.textAlign = "center";
+  card.innerHTML = `<div class="section-sub" style="margin:20px 0;">Loading your info\u2026</div>`;
+  app.appendChild(card);
 }
 
 /* ---------- SCREEN: WELCOME ---------- */
@@ -1537,6 +1592,10 @@ function renderWelcome(returning){
 }
 
 /* ---------- SCREEN: HOME ---------- */
+function menuLabelHtml(label, suffix){
+  return `<span>${label}${suffix ? ` <span class="menu-item-suffix">${suffix}</span>` : ''}</span>`;
+}
+
 function renderHome(){
   stepHistory = [];
   cameFromWhatsLeft = false;
@@ -1546,10 +1605,14 @@ function renderHome(){
   card.className = "card";
   card.innerHTML = `
     <div class="eyebrow">Welcome back, ${currentAuthor.split(" ")[0]}</div>
-    <h1 class="section-title">What would you like to do?</h1>
+    <h1 class="section-title">Welcome Back!</h1>
+    <div class="section-sub">What would you like to do?</div>
   `;
   const menu = document.createElement('div');
   menu.className = "menu-list";
+
+  const declinedSelling = currentData.sellingPlan === "I won't be selling books at the Soirée";
+  const declinedDonating = currentData.prizesPlan === "I'll pass on donating prizes.";
 
   const items = [
     {label:"See the welcome message again", action: () => { currentScreen="welcome"; app.innerHTML=""; renderWelcome(true); window.scrollTo(0,0); }},
@@ -1557,15 +1620,19 @@ function renderHome(){
     {label:"Continue where I left off", action: () => continueWhereLeftOff()},
     {label:"My To-Do List", action: () => { whatsLeftScrollY = null; currentScreen="whats-left"; render(); }},
     {label:"Preview my QR code sheet", action: () => { currentScreen="qr-preview"; render(); }},
-    {label:"List of book(s) I said I was selling at the Soirée", action: () => { currentScreen="lookup-bringing"; render(); }},
-    {label:"List of book(s) I am donating", action: () => { currentScreen="lookup-donating"; render(); }},
+    {label:"List of book(s) I said I was selling at the Soirée",
+     suffix: declinedSelling ? "(you chose to not sell at the Soirée)" : null,
+     dimmed: declinedSelling, action: () => { currentScreen="lookup-bringing"; render(); }},
+    {label:"List of book(s) I am donating",
+     suffix: declinedDonating ? "(you chose to not donate)" : null,
+     dimmed: declinedDonating, action: () => { currentScreen="lookup-donating"; render(); }},
     {label:"Go to a specific section", action: () => { currentScreen="nav-submenu"; render(); }},
     {label:"Download Soirée graphics", action: () => { currentScreen="graphics"; render(); }},
   ];
   items.forEach(it=>{
     const b = document.createElement('div');
-    b.className = "menu-item";
-    b.innerHTML = `<span>${it.label}</span><span class="arrow">&rarr;</span>`;
+    b.className = "menu-item" + (it.dimmed ? " menu-item-dimmed" : "");
+    b.innerHTML = `${menuLabelHtml(it.label, it.suffix)}<span class="arrow">&rarr;</span>`;
     b.onclick = it.action;
     menu.appendChild(b);
   });
@@ -2051,15 +2118,24 @@ function renderNavSubmenu(){
   card.innerHTML = `<div class="eyebrow">Jump To</div><h1 class="section-title">Go to a Specific Section</h1>`;
   const menu = document.createElement('div');
   menu.className = "menu-list";
+
+  const declinedBoth = currentData.swagPlan === "I'll pass on adding swag to the totes."
+    && currentData.prizesPlan === "I'll pass on donating prizes.";
+
+  const navConditions = {
+    "dropoff": { dimmed: declinedBoth, suffix: declinedBoth ? "(you chose to not include your swag or donate prizes)" : null }
+  };
+
   NAV_MENU.forEach(item=>{
+    const cond = navConditions[item.target] || {};
     const b = document.createElement('div');
-    b.className = "menu-item";
-    b.innerHTML = `<span>${item.label}</span><span class="arrow">&rarr;</span>`;
+    b.className = "menu-item" + (cond.dimmed ? " menu-item-dimmed" : "");
+    b.innerHTML = `${menuLabelHtml(item.label, cond.suffix)}<span class="arrow">&rarr;</span>`;
     b.onclick = () => {
       let target = item.target;
-      if(target === "__bringing__"){
-        target = currentData.sellingPlan === "I plan to sell books at the Soirée" ? "books-selling" : "book-signing-plan";
-      }
+      if(target === "__selling__") target = sellingSectionTarget();
+      else if(target === "__presale__") target = presaleSectionTarget();
+      else if(target === "__prizes__") target = prizesSectionTarget();
       goToSectionFromNavSubmenu(target);
     };
     menu.appendChild(b);
@@ -2363,6 +2439,31 @@ function renderSection(){
     // Entered via the To-Do List or "Go to a specific section": skip the
     // "save & continue" verbiage entirely and just offer the three simple
     // exits, with the entry-specific one first.
+    if(step.shortcutDynamicButton){
+      const cfg = step.shortcutDynamicButton;
+      const dynBtnRow = document.createElement('div');
+      dynBtnRow.className = "btn-row";
+      dynBtnRow.style.marginBottom = "16px";
+      const dynBtn = document.createElement('button');
+      dynBtn.className = "btn btn-primary btn-compact";
+      dynBtn.textContent = cfg.label;
+      dynBtn.onclick = async () => {
+        collectFieldValues(step);
+        await saveAuthorData(currentAuthor, currentData);
+        showToast("Saved!");
+        goToSection(cfg.target);
+      };
+      dynBtnRow.appendChild(dynBtn);
+      card.appendChild(dynBtnRow);
+
+      function updateDynBtnVisibility(){
+        const checked = card.querySelector(`input[name="${cfg.watchField}"]:checked`);
+        dynBtnRow.style.display = (checked && checked.value === cfg.showWhen) ? "" : "none";
+      }
+      card.querySelectorAll(`input[name="${cfg.watchField}"]`).forEach(r => r.addEventListener('change', updateDynBtnVisibility));
+      updateDynBtnVisibility();
+    }
+
     const firstLink = document.createElement('div');
     firstLink.className = "home-link";
     firstLink.textContent = cameFromWhatsLeft ? "Save & return to To-Do list" : "Save & choose a different section";
@@ -3292,17 +3393,25 @@ function renderDonationKnowledge(step){
 
     appendMainScreenLink(card, "Save & return to main screen");
 
-    if(step.shortcutContinueLabel){
-      const continueBtnRow = document.createElement('div');
-      continueBtnRow.className = "btn-row";
-      continueBtnRow.style.marginTop = "20px";
-      const continueBtn = document.createElement('button');
-      continueBtn.className = "btn btn-primary btn-compact";
-      continueBtn.textContent = step.shortcutContinueLabel;
-      continueBtn.onclick = () => { collectValues(); advanceStep(step); };
-      continueBtnRow.appendChild(continueBtn);
-      card.appendChild(continueBtnRow);
-    }
+    const dynBtnRow = document.createElement('div');
+    dynBtnRow.className = "btn-row";
+    dynBtnRow.style.marginTop = "20px";
+    const dynBtn = document.createElement('button');
+    dynBtn.className = "btn btn-primary btn-compact";
+    dynBtn.textContent = "Add your prizes";
+    dynBtn.onclick = async () => {
+      collectValues();
+      await saveAuthorData(currentAuthor, currentData);
+      showToast("Saved!");
+      goToSection("donation-titles");
+    };
+    dynBtnRow.appendChild(dynBtn);
+    dynBtnRow.style.display = currentData.donationKnowledge === "I know what prizes I'm donating" ? "" : "none";
+    card.appendChild(dynBtnRow);
+
+    card.querySelectorAll('input[name="donationKnowledge"]').forEach(r => r.addEventListener('change', ()=>{
+      dynBtnRow.style.display = currentData.donationKnowledge === "I know what prizes I'm donating" ? "" : "none";
+    }));
   }
 
   app.appendChild(card);
@@ -3540,8 +3649,14 @@ function renderQrPreview(){
   if(filled.length === 0){
     const empty = document.createElement('div');
     empty.className = "info-box";
-    empty.textContent = "You haven't saved any links yet, so there's nothing to preview. Head to \"Links to Places Readers Can Find You\" and add a few, then come back here.";
+    empty.textContent = "You haven't saved any links yet, so there's nothing to preview.";
     card.appendChild(empty);
+    const goBtn = document.createElement('button');
+    goBtn.className = "btn btn-primary btn-compact";
+    goBtn.style.marginTop = "10px";
+    goBtn.textContent = "Go to Links screen";
+    goBtn.onclick = () => goToSection("links");
+    card.appendChild(goBtn);
   } else {
     const wrap = document.createElement('div');
     wrap.style.cssText = "display:flex;justify-content:center;overflow-x:auto;padding:10px 0;";
