@@ -594,9 +594,9 @@ const STEPS = {
 
   "general-info": {
     title: "General Info", icon: FLOURISH.f1,
-    sub: "Your basics — how we'll credit you, contact you, and show you off.",
+    sub: "Your basics — how I'll credit you, contact you, and show you off.",
     fields: [
-      {key:"fullName", label:"Full name", type:"text", required:true, help:"How you want your name associated with posts about you, your name tag, etc."},
+      {key:"fullName", label:"Full name", type:"text", required:true, titleCase:true, help:"How you want your name associated with posts about you, your name tag, etc."},
       {key:"email", label:"Email address", type:"email", required:true, help:"The one you want Soirée correspondence to go to."},
       {key:"instagram", label:"Instagram profile name", type:"text", required:true, placeholder:"@"},
       {key:"bio", label:"Bio", type:"textarea", required:true},
@@ -610,7 +610,7 @@ const STEPS = {
     title: "Your BINGO Book", icon: FLOURISH.book,
     sub: "It's BINGO, but with bookish words, not numbers.",
     fields: [
-      {key:"bingoBook", label:"Which of your books do you want to be a BINGO square?", type:"text", required:true, help:"We could pick one, but if you have a least-favorite of your books, we'd feel bad if that got picked! So we're asking you instead."}
+      {key:"bingoBook", label:"Which of your books do you want to be a BINGO square?", type:"text", required:true, help:"I could pick one, but if you have a least-favorite of your books, I'd feel bad if that got picked! So I'm asking you instead."}
     ],
     next: () => "misc-fun"
   },
@@ -627,18 +627,18 @@ const STEPS = {
       {key:"heroineBook", label:"If you could be the heroine of any book (other than one of yours), which book would it be?", type:"text", autoCapitalize:true, help:"Feel free to elaborate on your choice, or just give the title."},
       {key:"readingFormat", label:"When you read for pleasure, you usually grab...", type:"radio", options:["A physical book","Kindle","Headphones for an audiobook","A solid mix of all that"]},
       {key:"sportsSong", label:"If you were a sports superstar, what song would you want played when you ran out onto the field?", type:"text", autoCapitalize:true},
-      {key:"contactPermission", label:"We may want to contact someone in your life (spouse, mom, friend, sister, etc) to get some fun inside info about you — nothing embarrassing! Do we have your permission to do that?", type:"radio", required:true, options:["Yes","No"]}
+      {key:"contactPermission", label:"I may want to contact someone in your life (spouse, mom, friend, sister, etc) to get some fun inside info about you — nothing embarrassing! Do I have your permission to do that?", type:"radio", required:true, options:["Yes","No"]}
     ],
     next: (d) => d.contactPermission === "Yes" ? "fun-stuff-cont" : "links"
   },
 
   "fun-stuff-cont": {
     title: "Fun Stuff, cont.", icon: FLOURISH.heart,
-    sub: "Just a little contact info for the person we'll reach out to.",
+    sub: "Just a little contact info for the person I'll reach out to.",
     fields: [
-      {key:"contactName", label:"What is the name of the person it's okay for us to contact?", type:"text"},
+      {key:"contactName", label:"What is the name of the person it's okay for me to contact?", type:"text"},
       {key:"contactRelationship", label:"What is your relationship to them?", type:"text", help:"Sister, spouse, best friend, etc."},
-      {key:"contactInfo", label:"Provide their contact info.", type:"textarea", help:"If you give us a phone number, let us know if it's better to call or text."}
+      {key:"contactInfo", label:"Provide their contact info.", type:"textarea", help:"If you give me a phone number, let me know if it's better to call or text."}
     ],
     next: () => "links"
   },
@@ -660,7 +660,7 @@ const STEPS = {
       {key:"linkYoutube", label:"YouTube", type:"url", help:"Leave blank if not applicable."},
       {key:"linkBookbub", label:"BookBub", type:"url", help:"Leave blank if not applicable."},
       {key:"linkSpotify", label:"Spotify", type:"url", help:"Leave blank if not applicable."},
-      {key:"linkOther", label:"Name and link to anywhere else we've missed", type:"text", help:"Example: Spotify, [link]"}
+      {key:"linkOther", label:"Name and link to anywhere else that's been missed", type:"text", help:"Example: Spotify, [link]"}
     ],
     next: () => "book-signing-plan"
   },
@@ -675,7 +675,7 @@ const STEPS = {
 
   "book-signing-plan": {
     title: "Selling Books at the Soirée", icon: FLOURISH.bookStack,
-    sub: "Authors may sell books at the Soirée, offer presales, or do both! This section is only about books you plan to sell at the Soirée; we'll cover presales next.",
+    sub: "Authors may sell books at the Soirée, offer presales, or do both! This section is only about books you plan to sell at the Soirée; presales will be covered next.",
     fields: [
       {key:"sellingPlan", label:"", type:"radio", required:true, options:[
         "I plan to sell books at the Soirée",
@@ -719,7 +719,7 @@ const STEPS = {
 
   "presale-link": {
     title: "Presale Book Link", dividerBelow: FLOURISH.f1,
-    sub: "We'll post all presale links in our linktree for attendees to find.",
+    sub: "All presale links will be posted in the Soirée linktree for attendees to find.",
     info: true,
     body: "Whether you're using a Google form, email, or something else, we need a link to where people can order books from you.<br><br>If you don't have a link, or don't love the form you have, we have one you can customize and use as you'd like. Click <a href=\"https://forms.gle/3oYiZVmMW4AEPKFt5\" target=\"_blank\" rel=\"noopener\">HERE</a> to look at the form (<em>The form will open in a separate window, and you won't lose your progress here</em>).<br><br>All presale links will be posted in the Soir\u00e9e Linktree when tickets go on sale. Please have your form updated and ready by then.",
     fields: [
@@ -735,7 +735,7 @@ const STEPS = {
 
   "swag": {
     title: "Swag", icon: FLOURISH.heart,
-    sub: "Here's where you tell us what you're up for.",
+    sub: "Here's where you tell me what you're up for.",
     info: true,
     body: `Everyone will be given a tote bag with awesome bookish swag. Do you want to add any of your swag? We are happy to add whatever you send. Examples of past author swag: stickers, bookmarks, magnets, bracelets, custom tins with annotation tabs inside.<br><br>
     You can send as much as you want, and if there isn't enough for each tote, that's fine! However many you send is how many totes will get your swag.<br><br>
@@ -752,11 +752,11 @@ const STEPS = {
 
   "prizes": {
     title: "Prizes", icon: FLOURISH.heart,
-    sub: "Here's where you tell us what you're up for.",
+    sub: "Here's where you tell me what you're up for.",
     info: true,
-    body: `If you've been to the Soirée before you know that it's important to us that everyone goes home with a prize!<br><br>
+    body: `If you've been to the Soirée before you know that it's important to me that everyone goes home with a prize!<br><br>
     The committee has already started working tirelessly on finding prizes, but it takes a ridiculous amount of time to gather 175 different prizes for our book-loving community.<br><br>
-    Are you interested in donating a book or two or ten, or a whole series or two, as a prize? If so: YEAH! If not: we totally understand.<br><br>
+    Are you interested in donating a book or two or ten, or a whole series or two, as a prize? If so: YEAH! If not: I totally understand.<br><br>
     Each book/series that is donated will have a custom bookmark inside listing you as the donating author, and include a QR barcode to your website.<br><br>
     <strong>FYI:</strong> To be able to package prizes and keep my mental sanity, the deadline for receiving prizes is <strong>May 1</strong> <em>(an exception would be if someone is donating a book that comes out between May 1 and the Soirée)</em>.`,
     fields: [
@@ -824,7 +824,7 @@ const STEPS = {
     title: "Thanks So Much!", icon: FLOURISH.heart,
     sub: "We know that probably took several minutes to fill out — thank you!<br><br>You can come back if you need a reminder of any information, fill in answers you left open, update information, grab graphics, check calendar dates, or anything else.<br><br>See you at the Soirée!!!!",
     fields: [
-      {key:"finalComments", label:"Any questions, comments, or requests for us?", type:"textarea"}
+      {key:"finalComments", label:"Any questions, comments, or requests?", type:"textarea"}
     ],
     next: () => "done"
   },
@@ -1140,6 +1140,10 @@ let cameFromWhatsLeft = false;
 let cameFromNavSubmenu = false;
 let whatsLeftScrollY = null;
 let sectionScrollToKey = null;
+// Purely in-memory (not persisted) so the To-Do List always shows everything
+// again the next time the page loads — this only sticks around while
+// navigating within the current session.
+let todoShowOnlyRequired = false;
 
 function goToSectionFromChecklist(id, scrollToKey){
   whatsLeftScrollY = window.scrollY;
@@ -1182,6 +1186,33 @@ function appendMainScreenLink(container, label){
 }
 
 const app = document.getElementById('app');
+
+/* Remembers which screen/author you're on so an accidental browser refresh
+   returns you there instead of dumping you back at "Who are you?". Uses
+   real sessionStorage (not the localCache/window.storage wrapper above,
+   which only exists inside Claude's preview) so this actually works once
+   hosted. It's per-tab and clears when the tab closes — intentional, so a
+   stale screen doesn't linger across days. This only remembers your
+   position, not unsaved keystrokes; anything not yet saved on the current
+   screen is still lost on refresh, same as before. Admin screens are
+   deliberately excluded so a refresh can't skip the password prompt. */
+const RESTORABLE_SCREENS = new Set([
+  "welcome","home","dates","lookup-bringing","lookup-donating","nav-submenu",
+  "graphics","whats-left","continue-complete","fix-links","qr-preview","section"
+]);
+function saveNavState(){
+  try{
+    if(currentAuthor && RESTORABLE_SCREENS.has(currentScreen)){
+      sessionStorage.setItem("bss2027:navstate", JSON.stringify({
+        author: currentAuthor, screen: currentScreen, stepId: currentStepId,
+        cameFromWhatsLeft, cameFromNavSubmenu
+      }));
+    } else {
+      sessionStorage.removeItem("bss2027:navstate");
+    }
+  }catch(e){ /* private browsing / storage disabled — ignore */ }
+}
+
 function showToast(msg){
   const t = document.getElementById('toast');
   t.textContent = msg;
@@ -1223,6 +1254,7 @@ function render(){
   } else {
     window.scrollTo(0, 0);
   }
+  saveNavState();
 }
 
 function logoLockup(){
@@ -1575,11 +1607,11 @@ function renderWelcome(returning){
   const firstName = currentAuthor.split(" ")[0];
   card.innerHTML = `
     <div class="eyebrow">Welcome</div>
-    <h1 class="section-title">Hello, ${firstName}!</h1>
+    <h1 class="section-title">${returning ? "Welcome back" : "Hello"}, ${firstName}!</h1>
     <div class="section-sub welcome-copy" style="font-size:14.5px; line-height:1.8;">
-      <p>I'm so excited you are going to be part of the 2027 Soirée! It's a special year since it will be our 5th
+      <p>I'm so excited you are going to be part of the 2027 Soirée! It's a special year since it will be the 5th
       Birthday, so we're going to do some extra special things.</p>
-      <p>This form will give us all the information we need from you (at least we think so). But first,
+      <p>This form will give me all the information I need from you (at least I think so). But first,
       ${returning ? "here are those important dates and times again:" : "let me give you some important dates and times to get in your calendar ASAP!"}</p>
     </div>
   `;
@@ -1828,21 +1860,22 @@ function computeChecklist(){
     title: "Selling Books at the Soirée",
     rows: [
       isUndecidedSelling
-        ? {label:"Selling Books at the Soirée", done:false, declined:true, declinedText:"undecided", target:"book-signing-plan", addLabel:"Decide"}
+        ? {label:"Selling Books at the Soirée", done:false, tentative:true, preview:"undecided", target:"book-signing-plan", addLabel:"Decide"}
         : {label:"Selling Books at the Soirée", preview: d.sellingPlan ? sellingLabels[d.sellingPlan] : null,
            done:isFieldFilled("sellingPlan"), required:true, target:"book-signing-plan"}
     ]
   });
 
-  // ---- Books You Will Sell at the Soirée (only if they're selling) ----
+  // ---- Books You Will Sell at the Soirée (only if they're selling — and
+  // required once they've said yes, since we need the actual titles list). ----
   if(d.sellingPlan === "I plan to sell books at the Soirée"){
     const hasSellingTitles = sellingTitlesFilled();
     let sellRow;
     if(hasSellingTitles && d.sellingListStatus === "tentative"){
-      sellRow = {label:"Books you will sell at the Soirée", done:true, tentative:true, required:false, target:"books-selling", showEditWhenDone:true, preview:"you said you might update this list"};
+      sellRow = {label:"Books you will sell at the Soirée", done:true, tentative:true, required:true, target:"books-selling", showEditWhenDone:true, preview:"you said you might update this list"};
     } else {
       sellRow = {label:"Titles list", preview: hasSellingTitles ? truncatePreview(sellingTitlesText().replace(/\n/g," / "), 60) : null,
-        done:hasSellingTitles, required:false, target:"books-selling", showEditWhenDone:true, addLabel:"None listed"};
+        done:hasSellingTitles, required:true, target:"books-selling", showEditWhenDone:true, addLabel:"None listed"};
     }
     sections.push({ title:"Books You Will Sell at the Soirée", rows:[sellRow] });
   }
@@ -1857,16 +1890,17 @@ function computeChecklist(){
     ]
   });
 
-  // ---- Presale Book Link (only if they're doing a presale) ----
+  // ---- Presale Book Link (only if they're doing a presale — and required
+  // once they've said yes, since we now need the actual link). ----
   if(d.presalePlan === "Yes"){
     let linkRow;
     if(d.presaleFormChoice === "I am going to make my own form, but don't have a link for it yet" && !isFieldFilled("presaleLink")){
-      linkRow = {label:"Presale Book Link", done:false, declined:true, declinedText:"still need to add", target:"presale-link"};
+      linkRow = {label:"Presale Book Link", done:false, declined:true, declinedText:"still need to add", required:true, target:"presale-link"};
     } else if(d.presaleFormChoice === "Please send me your form that I can personalize" && !isFieldFilled("presaleLink")){
-      linkRow = {label:"Presale Book Link", done:true, required:false, target:"presale-link", showEditWhenDone:true, preview:"using the Soirée form. I will have it finished by Mar 1."};
+      linkRow = {label:"Presale Book Link", done:true, required:true, target:"presale-link", showEditWhenDone:true, preview:"using the Soirée form. I will have it finished by Mar 1."};
     } else {
       linkRow = {label:"Presale Book Link", preview: isFieldFilled("presaleLink") ? truncatePreview(currentData.presaleLink,50) : null,
-        done:isFieldFilled("presaleLink"), required:false, target:"presale-link", showEditWhenDone:true, addLabel:"Need to select"};
+        done:isFieldFilled("presaleLink"), required:true, target:"presale-link", showEditWhenDone:true, addLabel:"Need to select"};
     }
     sections.push({ title:"Presale Book Link", rows:[linkRow] });
   } else if(d.presalePlan === "No"){
@@ -1896,7 +1930,8 @@ function computeChecklist(){
     ]
   });
 
-  // ---- Donated Books (only if they opted in) ----
+  // ---- Donated Books (only if they opted in — and required once they've
+  // said yes, since we need to know what they're donating). ----
   const wantsDonate = d.prizesPlan === "I'd love to donate some prizes!";
   const declinedDonate = d.prizesPlan === "I'll pass on donating prizes.";
   if(wantsDonate || declinedDonate){
@@ -1907,13 +1942,13 @@ function computeChecklist(){
       const hasTitles = donatedTitlesFilled();
       const hasCount = isFieldFilled("donatedCount");
       if(hasTitles && d.donationListStatus === "tentative"){
-        row = {label:"Prizes you are donating", done:true, tentative:true, required:false, target:"donation-titles", showEditWhenDone:true, preview:"you said you might update this"};
+        row = {label:"Prizes you are donating", done:true, tentative:true, required:true, target:"donation-titles", showEditWhenDone:true, preview:"you said you might update this"};
       } else if(hasTitles){
-        row = {label:"Donated books", preview: truncatePreview(donatedTitlesText().replace(/\n/g," / "), 60), done:true, required:false, target:"donation-titles", showEditWhenDone:true};
+        row = {label:"Donated books", preview: truncatePreview(donatedTitlesText().replace(/\n/g," / "), 60), done:true, required:true, target:"donation-titles", showEditWhenDone:true};
       } else if(hasCount){
-        row = {label:"Donated books", preview: truncatePreview(d.donatedCount, 60), done:true, required:false, target:"donation-knowledge", showEditWhenDone:true};
+        row = {label:"Donated books", preview: truncatePreview(d.donatedCount, 60), done:true, required:true, target:"donation-knowledge", showEditWhenDone:true};
       } else {
-        row = {label:"Donated books", done:false, required:false, target:"donation-knowledge", addLabel:"Have not added"};
+        row = {label:"Donated books", done:false, required:true, target:"donation-knowledge", addLabel:"Have not added"};
       }
     }
     sections.push({ title:"Donated Books", rows:[row] });
@@ -2064,15 +2099,23 @@ function renderWhatsLeft(){
   summary.innerHTML = `You've completed <span class="count">${requiredDone} of ${requiredTotal}</span> required tasks.<br>Only items marked with an * are required.`;
   card.appendChild(summary);
 
+  const toggleBtn = document.createElement('button');
+  toggleBtn.className = "btn btn-secondary btn-tiny";
+  toggleBtn.style.marginBottom = "18px";
+  toggleBtn.textContent = todoShowOnlyRequired ? "Show all items" : "Show only required items";
+  toggleBtn.onclick = () => { todoShowOnlyRequired = !todoShowOnlyRequired; render(); };
+  card.appendChild(toggleBtn);
+
   sections.forEach(section => {
-    if(!section.rows.length) return;
+    const rows = todoShowOnlyRequired ? section.rows.filter(r => r.required) : section.rows;
+    if(!rows.length) return;
     const wrap = document.createElement('div');
     wrap.className = "checklist-section";
     const title = document.createElement('div');
     title.className = "checklist-section-title";
     title.innerHTML = `<span>${section.title}</span>` + (section.note ? `<span class="note">${section.note}</span>` : "");
     wrap.appendChild(title);
-    section.rows.forEach(row => renderChecklistRow(wrap, row));
+    rows.forEach(row => renderChecklistRow(wrap, row));
     card.appendChild(wrap);
   });
 
@@ -3568,12 +3611,27 @@ function renderField(f){
       inp.pattern = "[0-9]*";
     }
     if(f.autoCapitalize) inp.autocapitalize = "sentences";
+    if(f.titleCase){
+      inp.autocapitalize = "words";
+      inp.addEventListener('blur', ()=>{
+        const cased = titleCaseValue(inp.value);
+        if(cased !== inp.value) inp.value = cased;
+      });
+    }
     if(f.placeholder) inp.placeholder = f.placeholder;
     wrap.appendChild(inp);
   }
   return wrap;
 }
 function escapeAttr(s){ return String(s).replace(/"/g,'&quot;'); }
+
+/* Capitalizes the first letter of each word without touching the rest —
+   so "mcdonald" -> "Mcdonald" (preserves any deliberate internal
+   capitalization like "McDonald" if it's already typed that way), and
+   "o'brien" -> "O'Brien" since the apostrophe breaks the word boundary. */
+function titleCaseValue(s){
+  return String(s || "").replace(/\b\w/g, ch => ch.toUpperCase());
+}
 
 /* ---------- FILE UPLOAD (headshot / logo) ---------- */
 function fileStorageKey(field){ return `bss2027:file:${slug(currentAuthor)}:${field}`; }
@@ -3745,7 +3803,7 @@ function renderQrPreview(){
   card.innerHTML = `
     <div class="eyebrow">Preview</div>
     <h1 class="section-title">Your QR Code Sheet</h1>
-    <div class="section-sub">A preview of every QR code we'll generate from your saved links.</div>
+    <div class="section-sub">A preview of every QR code that will be generated from your saved links.</div>
   `;
 
   const filled = Object.keys(QR_TEMPLATES).filter(k => currentData[k] && currentData[k].trim());
@@ -3900,6 +3958,17 @@ async function buildQrSheetCanvas(canvas, filledKeys){
   }
 }
 
+/* Quick, forgiving check: catches obvious typos (missing @, missing dot,
+   stray spaces) without actually confirming they own the address — that
+   would mean sending a real verification email, which isn't what's needed
+   here, just a typo-catcher. */
+function isPlausibleEmail(str){
+  if(!str) return true;
+  const s = str.trim();
+  if(!s) return true;
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
+}
+
 /* Quick, forgiving check: catches obvious typos (missing https://, no dot)
    without pinging the actual URL — that's what the Link Verification
    screen right after this one is for. */
@@ -3957,7 +4026,8 @@ function collectFieldValues(step){
     } else {
       const el = document.querySelector(`[data-key="${f.key}"]`);
       if(el){
-        const newVal = f.type === "url" ? normalizeUrlValue(el.value) : el.value;
+        let newVal = f.type === "url" ? normalizeUrlValue(el.value) : el.value;
+        if(f.titleCase) newVal = titleCaseValue(newVal);
         // If a link's value actually changed, its old verified/deferred status
         // no longer applies — it needs to be checked again.
         if(f.type === "url" && currentData[f.key] !== newVal && currentData.meta && currentData.meta.linkVerification){
@@ -3990,6 +4060,20 @@ function collectFieldValues(step){
 
 async function advanceStep(step){
   collectFieldValues(step);
+  if(currentStepId === "general-info"){
+    const email = (currentData.email || "").trim();
+    if(email && !isPlausibleEmail(email)){
+      const first = document.querySelector(`[data-key="email"]`);
+      if(first){
+        first.style.outline = "2px solid var(--terracotta)";
+        first.style.borderRadius = "8px";
+        first.focus();
+        setTimeout(()=>{ first.style.outline = ""; }, 4000);
+      }
+      showToast("That doesn't quite look like a valid email address \u2014 double check for a typo.");
+      return;
+    }
+  }
   if(currentStepId === "links"){
     gateLinksThenRun(async () => {
       const nextId = step.next ? step.next(currentData) : "done";
@@ -4005,7 +4089,7 @@ async function advanceStep(step){
     const hasLink = currentData.presaleLink && currentData.presaleLink.trim() !== "";
     const hasChoice = !!currentData.presaleFormChoice;
     if(!hasLink && !hasChoice){
-      showToast("Please add your presale link, or let us know which of the two options below fits you, before continuing.");
+      showToast("Please add your presale link, or choose from the two options below.");
       return;
     }
     if(hasLink && !isPlausibleUrl(currentData.presaleLink.trim())){
@@ -4066,7 +4150,30 @@ function attachAutoAdvance(container){
 }
 
 /* ---------- INIT ---------- */
-render();
+async function restoreNavStateAndRender(){
+  let saved = null;
+  try{
+    const raw = sessionStorage.getItem("bss2027:navstate");
+    if(raw) saved = JSON.parse(raw);
+  }catch(e){ saved = null; }
+
+  const canRestore = saved && saved.author && RESTORABLE_SCREENS.has(saved.screen)
+    && (saved.screen !== "section" || STEPS[saved.stepId]);
+
+  if(!canRestore){ render(); return; }
+
+  currentAuthor = saved.author;
+  currentScreen = "loading";
+  render();
+  currentData = await loadAuthorData(saved.author);
+  currentScreen = saved.screen;
+  currentStepId = saved.stepId || null;
+  cameFromWhatsLeft = !!saved.cameFromWhatsLeft;
+  cameFromNavSubmenu = !!saved.cameFromNavSubmenu;
+  render();
+}
+restoreNavStateAndRender();
+
 </script>
 </body>
 </html>
