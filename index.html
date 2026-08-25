@@ -1609,8 +1609,8 @@ function renderWelcome(returning){
     <div class="eyebrow">Welcome</div>
     <h1 class="section-title">${returning ? "Welcome back" : "Hello"}, ${firstName}!</h1>
     <div class="section-sub welcome-copy" style="font-size:14.5px; line-height:1.8;">
-      <p>I'm so excited you are going to be part of the 2027 Soirée! It's a special year since it will be the 5th
-      Birthday, so we're going to do some extra special things.</p>
+      <p>I'm so excited you are going to be part of the 2027 Soirée! It's a special year since it will be the Soirée's 5th
+      Birthday! So we're going to do some extra special things.</p>
       <p>This form will give me all the information I need from you (at least I think so). But first,
       ${returning ? "here are those important dates and times again:" : "let me give you some important dates and times to get in your calendar ASAP!"}</p>
     </div>
@@ -1860,7 +1860,7 @@ function computeChecklist(){
     title: "Selling Books at the Soirée",
     rows: [
       isUndecidedSelling
-        ? {label:"Selling Books at the Soirée", done:false, tentative:true, preview:"undecided", target:"book-signing-plan", addLabel:"Decide"}
+        ? {label:"Selling Books at the Soirée", done:false, tentative:true, preview:"undecided (please finish updating by Feb 1)", target:"book-signing-plan", addLabel:"Decide"}
         : {label:"Selling Books at the Soirée", preview: d.sellingPlan ? sellingLabels[d.sellingPlan] : null,
            done:isFieldFilled("sellingPlan"), required:true, target:"book-signing-plan"}
     ]
@@ -1872,7 +1872,7 @@ function computeChecklist(){
     const hasSellingTitles = sellingTitlesFilled();
     let sellRow;
     if(hasSellingTitles && d.sellingListStatus === "tentative"){
-      sellRow = {label:"Books you will sell at the Soirée", done:true, tentative:true, required:true, target:"books-selling", showEditWhenDone:true, preview:"you said you might update this list"};
+      sellRow = {label:"Books you will sell at the Soirée", done:true, tentative:true, required:true, target:"books-selling", showEditWhenDone:true, preview:"Make final edits by Feb 1."};
     } else {
       sellRow = {label:"Titles list", preview: hasSellingTitles ? truncatePreview(sellingTitlesText().replace(/\n/g," / "), 60) : null,
         done:hasSellingTitles, required:true, target:"books-selling", showEditWhenDone:true, addLabel:"None listed"};
@@ -1895,9 +1895,9 @@ function computeChecklist(){
   if(d.presalePlan === "Yes"){
     let linkRow;
     if(d.presaleFormChoice === "I am going to make my own form, but don't have a link for it yet" && !isFieldFilled("presaleLink")){
-      linkRow = {label:"Presale Book Link", done:false, declined:true, declinedText:"still need to add", required:true, target:"presale-link"};
+      linkRow = {label:"Presale Book Link", done:false, declined:true, declinedText:"Please add link by Feb 1.", required:true, target:"presale-link"};
     } else if(d.presaleFormChoice === "Please send me your form that I can personalize" && !isFieldFilled("presaleLink")){
-      linkRow = {label:"Presale Book Link", done:true, required:true, target:"presale-link", showEditWhenDone:true, preview:"using the Soirée form. I will have it finished by Mar 1."};
+      linkRow = {label:"Presale Book Link", done:true, required:true, target:"presale-link", showEditWhenDone:true, preview:"using the Soirée form. Have done by March 1."};
     } else {
       linkRow = {label:"Presale Book Link", preview: isFieldFilled("presaleLink") ? truncatePreview(currentData.presaleLink,50) : null,
         done:isFieldFilled("presaleLink"), required:true, target:"presale-link", showEditWhenDone:true, addLabel:"Need to select"};
@@ -1942,7 +1942,7 @@ function computeChecklist(){
       const hasTitles = donatedTitlesFilled();
       const hasCount = isFieldFilled("donatedCount");
       if(hasTitles && d.donationListStatus === "tentative"){
-        row = {label:"Prizes you are donating", done:true, tentative:true, required:true, target:"donation-titles", showEditWhenDone:true, preview:"you said you might update this"};
+        row = {label:"Prizes you are donating", done:true, tentative:true, required:true, target:"donation-titles", showEditWhenDone:true, preview:"Make final edits by Mar 1."};
       } else if(hasTitles){
         row = {label:"Donated books", preview: truncatePreview(donatedTitlesText().replace(/\n/g," / "), 60), done:true, required:true, target:"donation-titles", showEditWhenDone:true};
       } else if(hasCount){
