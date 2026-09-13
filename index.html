@@ -675,7 +675,7 @@ const STEPS = {
 
   "book-signing-plan": {
     title: "Selling Books at the Soirée", icon: FLOURISH.bookStack,
-    sub: "Authors may sell books at the Soirée, offer presales, or do both! This section is only about books you plan to sell at the Soirée; presales will be covered next.",
+    sub: "Authors may sell books at the Soirée, offer preorders, or do both! This section is only about books you plan to sell at the Soirée; preorders will be covered next.",
     fields: [
       {key:"sellingPlan", label:"", type:"radio", required:true, options:[
         "I plan to sell books at the Soirée",
@@ -685,7 +685,7 @@ const STEPS = {
     ],
     next: (d) => {
       if(d.sellingPlan === "I plan to sell books at the Soirée") return "books-selling";
-      return "presale-plan";
+      return "preorder-plan";
     },
     shortcutDynamicButton: {
       watchField: "sellingPlan",
@@ -699,36 +699,28 @@ const STEPS = {
     title: "Books You Will Sell at the Soirée", icon: FLOURISH.book,
     sub: "A list of all titles being sold by all authors will be given to all attendees.",
     customType: "sellingTitles",
-    next: () => "presale-plan"
+    next: () => "preorder-plan"
   },
 
-  "presale-plan": {
-    title: "Presale Books for the Soirée", icon: FLOURISH.bookStack,
-    sub: "Are you planning on having a presale for books at the Soirée?",
+  "preorder-plan": {
+    title: "Preorder Books for the Soirée", icon: FLOURISH.bookStack,
+    sub: "Will you have any books available for preorder before the Soirée?",
     fields: [
-      {key:"presalePlan", label:"", type:"radio", required:true, options:["Yes","No"]}
+      {key:"preorderPlan", label:"", type:"radio", required:true, options:["Yes","No"]}
     ],
-    next: (d) => d.presalePlan === "Yes" ? "presale-link" : "swag",
+    next: (d) => d.preorderPlan === "Yes" ? "preorder-books" : "swag",
     shortcutDynamicButton: {
-      watchField: "presalePlan",
+      watchField: "preorderPlan",
       showWhen: "Yes",
-      label: "Add your Presale Link",
-      target: "presale-link"
+      label: "Add my preorder books",
+      target: "preorder-books"
     }
   },
 
-  "presale-link": {
-    title: "Presale Book Link", dividerBelow: FLOURISH.f1,
-    sub: "All presale links will be posted in the Soirée linktree for attendees to find.",
-    info: true,
-    body: "Whether you're using a Google form, email, or something else, we need a link to where people can order books from you.<br><br>If you don't have a link, or don't love the form you have, we have one you can customize and use as you'd like. Click <a href=\"https://forms.gle/3oYiZVmMW4AEPKFt5\" target=\"_blank\" rel=\"noopener\">HERE</a> to look at the form (<em>The form will open in a separate window, and you won't lose your progress here</em>).<br><br>All presale links will be posted in the Soir\u00e9e Linktree when tickets go on sale. Please have your form updated and ready by then.",
-    fields: [
-      {key:"presaleLink", label:"What link do you want people to use to presale books?", type:"url"},
-      {key:"presaleFormChoice", label:"", type:"radio", options:[
-        "I am going to make my own form, but don't have a link for it yet",
-        "Please send me your form that I can personalize"
-      ]}
-    ],
+  "preorder-books": {
+    title: "Preorder Books", dividerBelow: FLOURISH.f1,
+    sub: "List the books you'd like available for preorder.",
+    customType: "preorderBooks",
     next: () => "swag"
   },
 
@@ -833,7 +825,7 @@ const STEPS = {
 };
 
 const STEP_ORDER = ["general-info","bingo-book","misc-fun","fun-stuff-cont","links","link-verification",
-  "book-signing-plan","presale-link","books-selling",
+  "book-signing-plan","preorder-books","books-selling",
   "swag","prizes","donation-knowledge","donation-titles","dropoff","social-media","final-comments"];
 
 const NAV_MENU = [
@@ -842,7 +834,7 @@ const NAV_MENU = [
   {label:"Misc fun stuff!", target:"misc-fun"},
   {label:"Links to places readers can find you", target:"links"},
   {label:"Selling Books at the Soirée", target:"__selling__"},
-  {label:"Presale Books for the Soirée", target:"__presale__"},
+  {label:"Preorder Books for the Soirée", target:"__preorder__"},
   {label:"Swag", target:"swag"},
   {label:"Prizes/Donated books", target:"__prizes__"},
   {label:"Where to mail or drop off swag & prizes", target:"dropoff"},
@@ -856,8 +848,8 @@ const NAV_MENU = [
 function sellingSectionTarget(){
   return currentData.sellingPlan === "I plan to sell books at the Soirée" ? "books-selling" : "book-signing-plan";
 }
-function presaleSectionTarget(){
-  return currentData.presalePlan === "Yes" ? "presale-link" : "presale-plan";
+function preorderSectionTarget(){
+  return currentData.preorderPlan === "Yes" ? "preorder-books" : "preorder-plan";
 }
 function prizesSectionTarget(){
   return currentData.prizesPlan === "I'd love to donate some prizes!" ? "donation-knowledge" : "prizes";
@@ -1029,7 +1021,7 @@ async function loadAuthorData(author){
     });
     const json = await res.json();
     if(json && json.success && json.exists){
-      const data = { meta: { welcomeSeen: !!json.meta.welcomeSeen, currentStep: json.meta.currentStep || "general-info", generalInfoUpdatedAt:null, linkVerification: json.meta.linkVerification || {}, presaleFormRequestSent: !!json.meta.presaleFormRequestSent }, ...json.data };
+      const data = { meta: { welcomeSeen: !!json.meta.welcomeSeen, currentStep: json.meta.currentStep || "general-info", generalInfoUpdatedAt:null, linkVerification: json.meta.linkVerification || {} }, ...json.data };
       if(json.headshotUrl) data.headshotUrl = json.headshotUrl;
       if(json.logoUrl) data.logoUrl = json.logoUrl;
       migrateBooksSellingField(data);
@@ -1067,19 +1059,19 @@ function migrateBooksSellingField(data){
     switch(data.bookSigningPlan){
       case "Bring a selection of books to sell at the event AND have a presale":
         data.sellingPlan = "I plan to sell books at the Soirée";
-        data.presalePlan = "Yes";
+        data.preorderPlan = "Yes";
         break;
       case "Bring a selection of books to sell at the event, but NOT have a presale":
         data.sellingPlan = "I plan to sell books at the Soirée";
-        data.presalePlan = "No";
+        data.preorderPlan = "No";
         break;
       case "ONLY a presale, but NOT bring a selection of books to sell at the event.":
         data.sellingPlan = "I won't be selling books at the Soirée";
-        data.presalePlan = "Yes";
+        data.preorderPlan = "Yes";
         break;
       case "I won't sell books at the Soirée, OR have a presale":
         data.sellingPlan = "I won't be selling books at the Soirée";
-        data.presalePlan = "No";
+        data.preorderPlan = "No";
         break;
       case "Haven't decided yet":
         data.sellingPlan = "Haven't decided yet";
@@ -1122,7 +1114,7 @@ function migrateBooksSellingField(data){
   }
 }
 function freshData(){
-  return { meta:{ welcomeSeen:false, currentStep:"general-info", generalInfoUpdatedAt:null, linkVerification:{}, presaleFormRequestSent:false } };
+  return { meta:{ welcomeSeen:false, currentStep:"general-info", generalInfoUpdatedAt:null, linkVerification:{} } };
 }
 async function saveAuthorData(author, data){
   localCache.set(storageKey(author), JSON.stringify(data), true);
@@ -1198,7 +1190,7 @@ const app = document.getElementById('app');
    deliberately excluded so a refresh can't skip the password prompt. */
 const RESTORABLE_SCREENS = new Set([
   "welcome","home","dates","lookup-bringing","lookup-donating","nav-submenu",
-  "graphics","whats-left","continue-complete","fix-links","qr-preview","section"
+  "graphics","whats-left","continue-complete","fix-links","qr-preview","preorder-preview","section"
 ]);
 function saveNavState(){
   try{
@@ -1238,6 +1230,7 @@ function render(){
   else if(currentScreen === "continue-complete") renderContinueComplete();
   else if(currentScreen === "fix-links") renderFixLinks();
   else if(currentScreen === "qr-preview") renderQrPreview();
+  else if(currentScreen === "preorder-preview") renderPreorderPreview();
   else if(currentScreen === "section") renderSection();
   if(currentScreen === "whats-left" && whatsLeftScrollY !== null){
     window.scrollTo(0, whatsLeftScrollY);
@@ -1783,6 +1776,11 @@ function sellingTitlesText(){
   return currentData.sellingTitlesList.filter(t => t && t.trim() !== "").join("\n");
 }
 
+function preorderBooksText(){
+  if(!Array.isArray(currentData.preorderBooksList)) return "";
+  return currentData.preorderBooksList.filter(b => b && b.title && b.title.trim() !== "").map(b => b.title).join("\n");
+}
+
 function truncatePreview(str, max){
   if(!str) return "";
   str = String(str).trim();
@@ -1880,33 +1878,27 @@ function computeChecklist(){
     sections.push({ title:"Books You Will Sell at the Soirée", rows:[sellRow] });
   }
 
-  // ---- Presale plan ----
-  const presaleLabels = { "Yes":"have a presale.", "No":"no presale." };
+  // ---- Preorder plan ----
+  const preorderLabels = { "Yes":"have preorder books.", "No":"no preorder books." };
   sections.push({
-    title: "Presale for the Soirée",
+    title: "Preorder Books for the Soirée",
     rows: [
-      {label:"Your plan", preview: d.presalePlan ? presaleLabels[d.presalePlan] : null,
-       done:isFieldFilled("presalePlan"), required:false, target:"presale-plan"}
+      {label:"Your plan", preview: d.preorderPlan ? preorderLabels[d.preorderPlan] : null,
+       done:isFieldFilled("preorderPlan"), required:false, target:"preorder-plan"}
     ]
   });
 
-  // ---- Presale Book Link (only if they're doing a presale — and required
-  // once they've said yes, since we now need the actual link). ----
-  if(d.presalePlan === "Yes"){
-    let linkRow;
-    if(d.presaleFormChoice === "I am going to make my own form, but don't have a link for it yet" && !isFieldFilled("presaleLink")){
-      linkRow = {label:"Presale Book Link", done:false, declined:true, declinedText:"Please add link by Feb 1.", required:true, target:"presale-link"};
-    } else if(d.presaleFormChoice === "Please send me your form that I can personalize" && !isFieldFilled("presaleLink")){
-      linkRow = {label:"Presale Book Link", done:true, required:true, target:"presale-link", showEditWhenDone:true, preview:"using the Soirée form. Have done by March 1."};
-    } else {
-      linkRow = {label:"Presale Book Link", preview: isFieldFilled("presaleLink") ? truncatePreview(currentData.presaleLink,50) : null,
-        done:isFieldFilled("presaleLink"), required:true, target:"presale-link", showEditWhenDone:true, addLabel:"Need to select"};
-    }
-    sections.push({ title:"Presale Book Link", rows:[linkRow] });
-  } else if(d.presalePlan === "No"){
+  // ---- Preorder Books list (only if they said yes — required once they
+  // have, since attendees need at least one listed book). ----
+  if(d.preorderPlan === "Yes"){
+    const hasPreorderBooks = Array.isArray(d.preorderBooksList) && d.preorderBooksList.some(b => b && b.title && b.title.trim());
+    const row = {label:"Preorder Books", preview: hasPreorderBooks ? preorderBooksText().replace(/\n/g," / ") : null,
+      done:hasPreorderBooks, required:true, target:"preorder-books", showEditWhenDone:true, addLabel:"Need to add"};
+    sections.push({ title:"Preorder Books", rows:[row] });
+  } else if(d.preorderPlan === "No"){
     sections.push({
-      title: "Presale Book Link",
-      rows: [ {label:"Presale link", done:false, declined:true, declinedText:"you chose no presale"} ]
+      title: "Preorder Books",
+      rows: [ {label:"Preorder books", done:false, declined:true, declinedText:"you chose no preorder"} ]
     });
   }
 
@@ -2237,7 +2229,7 @@ function renderNavSubmenu(){
     b.onclick = () => {
       let target = item.target;
       if(target === "__selling__") target = sellingSectionTarget();
-      else if(target === "__presale__") target = presaleSectionTarget();
+      else if(target === "__preorder__") target = preorderSectionTarget();
       else if(target === "__prizes__") target = prizesSectionTarget();
       goToSectionFromNavSubmenu(target);
     };
@@ -2384,6 +2376,12 @@ function renderSection(){
   if(step.customType === "sellingTitles"){
     app.removeChild(app.lastChild); // remove the logo lockup we just added; renderSellingTitles adds its own
     renderSellingTitles(step);
+    return;
+  }
+
+  if(step.customType === "preorderBooks"){
+    app.removeChild(app.lastChild); // remove the logo lockup we just added; renderPreorderBooks adds its own
+    renderPreorderBooks(step);
     return;
   }
 
@@ -3395,6 +3393,370 @@ function renderSellingTitles(step){
   app.appendChild(card);
 }
 
+/* ---------- SCREEN: PREORDER BOOKS (custom) ---------- */
+function emptyPreorderBook(){
+  return {
+    id: 'pb_' + Date.now().toString(36) + Math.random().toString(36).slice(2,8),
+    title: "", regularPrice: "", soireePrice: "", blurb: "",
+    coverUrl: "", coverUploadedAt: null
+  };
+}
+
+function renderPreorderBooks(step){
+  app.appendChild(logoLockup());
+  const card = document.createElement('div');
+  card.className = "card";
+  const titleImg = step.icon ? `<img src="${step.icon}">` : "";
+  card.innerHTML = `
+    <div class="eyebrow">Bookish Summer Soirée</div>
+    <h1 class="section-title">${titleImg}${step.title}</h1>
+    <div class="section-sub">${step.sub || ""}</div>
+    <div class="help" style="margin-top:10px;line-height:1.5;">
+      This is going to be an amazing shopping experience for attendees! They'll be able to add books from every author into one cart and check out once — no need to visit each table one by one.<br><br>
+      You'll get email updates as your books sell, and you can check your sales anytime from your Home Page. Payments are sent to your Stripe account automatically with every sale — you choose whether Stripe pays out to your bank weekly, daily, or monthly, right from your own Stripe dashboard.<br><br>
+      Have a book that hasn't published yet, but will be in time for the Soirée? Be sure to include it.
+    </div>
+  `;
+
+  if(!Array.isArray(currentData.preorderBooksList) || currentData.preorderBooksList.length === 0){
+    currentData.preorderBooksList = [ emptyPreorderBook() ];
+  }
+  // Backfill ids for any books saved before covers existed.
+  currentData.preorderBooksList.forEach(b => { if(!b.id) b.id = emptyPreorderBook().id; });
+
+  const entriesWrap = document.createElement('div');
+  entriesWrap.style.marginTop = "18px";
+  card.appendChild(entriesWrap);
+
+  function renderEntries(){
+    entriesWrap.innerHTML = "";
+    currentData.preorderBooksList.forEach((book, i) => {
+      entriesWrap.appendChild(buildPreorderBookEntry(book, i, renderEntries));
+    });
+
+    const addBtn = document.createElement('button');
+    addBtn.type = "button";
+    addBtn.className = "btn btn-secondary btn-tiny";
+    addBtn.textContent = "+ Add another book";
+    addBtn.style.marginTop = "6px";
+    addBtn.onclick = () => {
+      currentData.preorderBooksList.push(emptyPreorderBook());
+      renderEntries();
+    };
+    entriesWrap.appendChild(addBtn);
+
+    const previewLink = document.createElement('div');
+    previewLink.className = "home-link";
+    previewLink.style.marginTop = "16px";
+    previewLink.textContent = "Preview my Preorder Listing";
+    previewLink.onclick = async () => {
+      await saveAuthorData(currentAuthor, currentData);
+      currentScreen = "preorder-preview";
+      render();
+    };
+    entriesWrap.appendChild(previewLink);
+  }
+
+  renderEntries();
+
+  const enteredViaShortcut = cameFromWhatsLeft || cameFromNavSubmenu;
+
+  if(!enteredViaShortcut){
+    const savePrompt = document.createElement('div');
+    savePrompt.className = "save-prompt";
+    savePrompt.textContent = "Save your answers and move to the next section?";
+    card.appendChild(savePrompt);
+
+    const btnRow = document.createElement('div');
+    btnRow.className = "btn-row";
+    const back = document.createElement('button');
+    back.className = "btn btn-secondary btn-tiny";
+    back.textContent = "\u2190 Back";
+    back.onclick = async () => {
+      await saveAuthorData(currentAuthor, currentData);
+      goBackSection();
+    };
+    const saveNext = document.createElement('button');
+    saveNext.className = "btn btn-primary btn-compact";
+    saveNext.textContent = "Yes, save & continue";
+    saveNext.onclick = () => advanceStep(step);
+    async function saveExitHandler(){
+      await saveAuthorData(currentAuthor, currentData);
+      showToast("Saved!");
+      currentScreen = "home";
+      render();
+    }
+    btnRow.appendChild(saveNext);
+    card.appendChild(btnRow);
+
+    const btnRowSecondary = document.createElement('div');
+    btnRowSecondary.className = "btn-row";
+    btnRowSecondary.style.marginTop = "20px";
+    btnRowSecondary.appendChild(back);
+    card.appendChild(btnRowSecondary);
+
+    const homeLink = document.createElement('div');
+    homeLink.className = "home-link";
+    homeLink.textContent = "Save & return to home screen";
+    homeLink.onclick = saveExitHandler;
+    card.appendChild(homeLink);
+
+    appendMainScreenLink(card, "Save & return to main screen");
+  } else {
+    const firstLink = document.createElement('div');
+    firstLink.className = "home-link";
+    firstLink.textContent = cameFromWhatsLeft ? "Save & return to To-Do list" : "Save & choose a different section";
+    firstLink.onclick = async () => {
+      await saveAuthorData(currentAuthor, currentData);
+      if(cameFromWhatsLeft){
+        cameFromWhatsLeft = false;
+        currentScreen = "whats-left";
+      } else {
+        currentScreen = "nav-submenu";
+      }
+      render();
+    };
+    card.appendChild(firstLink);
+
+    const homeLink = document.createElement('div');
+    homeLink.className = "home-link";
+    homeLink.textContent = "Save & return to home screen";
+    homeLink.onclick = async () => {
+      await saveAuthorData(currentAuthor, currentData);
+      cameFromWhatsLeft = false;
+      cameFromNavSubmenu = false;
+      currentScreen = "home";
+      render();
+    };
+    card.appendChild(homeLink);
+
+    appendMainScreenLink(card, "Save & return to main screen");
+  }
+  app.appendChild(card);
+}
+
+function buildPreorderBookEntry(book, index, onChange){
+  const wrap = document.createElement('div');
+  wrap.className = "card";
+  wrap.style.cssText = "background:var(--cream,#F7EFE1);margin-bottom:14px;padding:16px;box-shadow:none;border:1px solid rgba(12,30,61,0.08);";
+
+  const titleField = document.createElement('div');
+  titleField.className = "field";
+  titleField.innerHTML = `<label>Title (exactly as you want it displayed) <span class="req">*</span></label>`;
+  const titleInp = document.createElement('input');
+  titleInp.type = "text";
+  titleInp.placeholder = "Book title";
+  titleInp.value = book.title || "";
+  titleInp.addEventListener('input', ()=>{ book.title = titleInp.value; });
+  titleField.appendChild(titleInp);
+  wrap.appendChild(titleField);
+
+  const coverField = document.createElement('div');
+  coverField.className = "field";
+  coverField.innerHTML = `<label>Cover image</label>`;
+  coverField.appendChild(buildBookCoverUpload(book));
+  wrap.appendChild(coverField);
+
+  const regField = document.createElement('div');
+  regField.className = "field";
+  regField.innerHTML = `<label>Regular price <span class="req">*</span></label>`;
+  const regInp = document.createElement('input');
+  regInp.type = "number";
+  regInp.inputMode = "decimal";
+  regInp.step = "0.01";
+  regInp.min = "0";
+  regInp.placeholder = "e.g. 18.99";
+  regInp.value = book.regularPrice || "";
+  regInp.addEventListener('input', ()=>{ book.regularPrice = regInp.value; });
+  regField.appendChild(regInp);
+  wrap.appendChild(regField);
+
+  const soireeField = document.createElement('div');
+  soireeField.className = "field";
+  soireeField.innerHTML = `<label>Soirée price</label><div class="help">Optional — a small discount here is a great incentive to buy! Leave blank and your regular price shows instead.</div>`;
+  const soireeInp = document.createElement('input');
+  soireeInp.type = "number";
+  soireeInp.inputMode = "decimal";
+  soireeInp.step = "0.01";
+  soireeInp.min = "0";
+  soireeInp.placeholder = "e.g. 15.99";
+  soireeInp.value = book.soireePrice || "";
+  soireeInp.addEventListener('input', ()=>{ book.soireePrice = soireeInp.value; });
+  soireeField.appendChild(soireeInp);
+  wrap.appendChild(soireeField);
+
+  const blurbField = document.createElement('div');
+  blurbField.className = "field";
+  blurbField.innerHTML = `<label>Blurb</label><div class="help">Optional but encouraged.</div>`;
+  const blurbTa = document.createElement('textarea');
+  blurbTa.rows = 4;
+  blurbTa.value = book.blurb || "";
+  blurbTa.addEventListener('input', ()=>{ book.blurb = blurbTa.value; });
+  blurbField.appendChild(blurbTa);
+  wrap.appendChild(blurbField);
+
+  if(currentData.preorderBooksList.length > 1){
+    const removeLink = document.createElement('div');
+    removeLink.className = "home-link";
+    removeLink.style.cssText = "color:var(--terracotta,#E4593F);margin-top:4px;";
+    removeLink.textContent = "Remove this book";
+    removeLink.onclick = () => {
+      currentData.preorderBooksList.splice(index, 1);
+      onChange();
+    };
+    wrap.appendChild(removeLink);
+  }
+
+  return wrap;
+}
+
+/* Adapted from buildFileUpload (headshot/logo) for a per-book cover: writes
+   into the book object itself instead of currentData, and keys the Drive
+   upload off the book's stable id (not its array index) so covers stay
+   attached to the right book even after other entries are added/removed. */
+function buildBookCoverUpload(book){
+  const fileKey = "preorderCover_" + book.id;
+  const box = document.createElement('div');
+  const status = document.createElement('div');
+  status.className = "help";
+  status.style.marginTop = "0";
+  status.textContent = book.coverUrl
+    ? (book.coverUploadedAt ? `Uploaded — last updated ${new Date(book.coverUploadedAt).toLocaleString()}` : "Uploaded.")
+    : "No cover uploaded yet.";
+  const preview = document.createElement('img');
+  preview.style.cssText = "max-width:120px;max-height:160px;border-radius:8px;display:none;margin:10px 0;box-shadow:0 2px 10px rgba(12,30,61,0.12);";
+
+  const inp = document.createElement('input');
+  inp.type = "file";
+  inp.accept = "image/png,image/jpeg,image/webp";
+  inp.style.cssText = "font-family:'Montserrat',sans-serif;font-size:13px;";
+
+  inp.addEventListener('change', async ()=>{
+    const file = inp.files[0];
+    if(!file) return;
+    status.textContent = "Uploading…";
+    try{
+      const dataUrl = await resizeImage(file, 1600, "image/jpeg", 0.85);
+      const res = await fetch(APPS_SCRIPT_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ action:"uploadFile", authorName: currentAuthor, fileType: fileKey, base64: dataUrl, mimeType:"image/jpeg" })
+      });
+      const json = await res.json();
+      if(!json || !json.success) throw new Error((json && json.error) || "Upload didn't complete.");
+
+      book.coverUrl = json.url;
+      book.coverUploadedAt = new Date().toISOString();
+      localCache.set(fileStorageKey(fileKey), dataUrl, true);
+      await saveAuthorData(currentAuthor, currentData);
+
+      status.textContent = `Uploaded — last updated ${new Date(book.coverUploadedAt).toLocaleString()}`;
+      preview.src = dataUrl;
+      preview.style.display = "block";
+      showToast("Cover uploaded!");
+    }catch(e){
+      status.textContent = "Upload didn't go through (" + (e.message || "unknown error") + ") — please try again.";
+      showToast("Cover upload failed — please try again");
+    }
+  });
+
+  box.appendChild(status);
+  box.appendChild(preview);
+  box.appendChild(inp);
+
+  if(book.coverUrl){
+    const idMatch = book.coverUrl.match(/\/d\/([^/]+)/);
+    preview.src = idMatch ? `https://drive.google.com/uc?export=view&id=${idMatch[1]}` : book.coverUrl;
+    preview.style.display = "block";
+  } else if(book.coverUploadedAt){
+    localCache.get(fileStorageKey(fileKey), true).then(res=>{
+      if(res){ preview.src = res.value; preview.style.display = "block"; }
+    });
+  }
+  return box;
+}
+
+/* ---------- SCREEN: PREORDER PREVIEW ---------- */
+function renderPreorderPreview(){
+  app.appendChild(logoLockup());
+  const card = document.createElement('div');
+  card.className = "card";
+  card.innerHTML = `
+    <div class="eyebrow">Preview</div>
+    <h1 class="section-title">Your Preorder Listing</h1>
+    <div class="section-sub">This is roughly how your books will appear to attendees in the preorder store.</div>
+  `;
+
+  const books = (Array.isArray(currentData.preorderBooksList) ? currentData.preorderBooksList : [])
+    .filter(b => b && b.title && b.title.trim());
+
+  if(books.length === 0){
+    const empty = document.createElement('div');
+    empty.className = "info-box";
+    empty.textContent = "You haven't added any preorder books yet, so there's nothing to preview.";
+    card.appendChild(empty);
+    const goBtn = document.createElement('button');
+    goBtn.className = "btn btn-primary btn-compact";
+    goBtn.style.marginTop = "10px";
+    goBtn.textContent = "Go add books";
+    goBtn.onclick = () => goToSection("preorder-books");
+    card.appendChild(goBtn);
+  } else {
+    const grid = document.createElement('div');
+    grid.style.cssText = "display:flex;flex-direction:column;gap:14px;margin-top:8px;";
+    books.forEach(book => {
+      const reg = parseFloat(book.regularPrice);
+      const soiree = parseFloat(book.soireePrice);
+      const hasSoiree = !isNaN(soiree) && book.soireePrice !== "";
+      const displayPrice = hasSoiree ? soiree : reg;
+
+      const tile = document.createElement('div');
+      tile.style.cssText = "display:flex;gap:14px;padding:14px;border:1px solid rgba(12,30,61,0.1);border-radius:10px;background:#fff;";
+
+      const coverWrap = document.createElement('div');
+      coverWrap.style.cssText = "flex:0 0 auto;width:80px;height:120px;border-radius:6px;overflow:hidden;background:var(--cream,#F7EFE1);display:flex;align-items:center;justify-content:center;";
+      if(book.coverUrl){
+        const idMatch = book.coverUrl.match(/\/d\/([^/]+)/);
+        const img = document.createElement('img');
+        img.src = idMatch ? `https://drive.google.com/uc?export=view&id=${idMatch[1]}` : book.coverUrl;
+        img.style.cssText = "width:100%;height:100%;object-fit:cover;";
+        coverWrap.appendChild(img);
+      } else {
+        coverWrap.innerHTML = `<span style="font-size:11px;color:#999;text-align:center;padding:6px;">No cover</span>`;
+      }
+      tile.appendChild(coverWrap);
+
+      const info = document.createElement('div');
+      info.style.cssText = "flex:1;min-width:0;";
+      let priceHtml = "";
+      if(!isNaN(reg) && book.regularPrice !== ""){
+        if(hasSoiree && soiree < reg){
+          priceHtml = `<span style="text-decoration:line-through;opacity:.6;margin-right:6px;">$${reg.toFixed(2)}</span><strong>$${soiree.toFixed(2)}</strong>`;
+        } else {
+          priceHtml = `<strong>$${(isNaN(displayPrice) ? reg : displayPrice).toFixed(2)}</strong>`;
+        }
+      }
+      info.innerHTML = `
+        <div style="font-family:'Cormorant Garamond',serif;font-size:19px;font-weight:600;">${escapeAttr(book.title)}</div>
+        <div style="margin:4px 0;">${priceHtml}</div>
+        ${book.blurb ? `<div style="font-size:13px;color:#555;line-height:1.4;">${escapeAttr(book.blurb)}</div>` : ""}
+      `;
+      tile.appendChild(info);
+      grid.appendChild(tile);
+    });
+    card.appendChild(grid);
+  }
+
+  const link = document.createElement('div');
+  link.className = "home-link";
+  link.style.marginTop = "16px";
+  link.textContent = "Return to home";
+  link.onclick = () => { currentScreen = "home"; render(); };
+  card.appendChild(link);
+  appendMainScreenLink(card);
+  app.appendChild(card);
+}
+
 /* ---------- SCREEN: DONATION KNOWLEDGE (custom) ---------- */
 function renderDonationKnowledge(step){
   app.appendChild(logoLockup());
@@ -4040,22 +4402,6 @@ function collectFieldValues(step){
   if(currentStepId === "general-info"){
     currentData.meta.generalInfoUpdatedAt = new Date().toISOString();
   }
-  // If they've switched their presale plan to "No" after previously saying "Yes",
-  // clear out any presale link/form-choice answer so the To-Do list cleanly shows
-  // the "no presale" declined state instead of stale leftover data.
-  if(currentStepId === "presale-plan" && currentData.presalePlan === "No"){
-    currentData.presaleLink = "";
-    currentData.presaleFormChoice = null;
-  }
-  // The first time someone picks "Please send me your form that I can
-  // personalize" on the Presale Book Link screen, let Nicole know by email.
-  // Only fires once per author (tracked in meta), not on every re-save.
-  if(currentStepId === "presale-link"
-     && currentData.presaleFormChoice === "Please send me your form that I can personalize"
-     && !currentData.meta.presaleFormRequestSent){
-    currentData.meta.presaleFormRequestSent = true;
-    pushToSheet("requestPresaleForm", { authorName: currentAuthor, authorEmail: currentData.email || "" });
-  }
 }
 
 async function advanceStep(step){
@@ -4084,25 +4430,6 @@ async function advanceStep(step){
       goToSection(nextId);
     });
     return;
-  }
-  if(currentStepId === "presale-link"){
-    const hasLink = currentData.presaleLink && currentData.presaleLink.trim() !== "";
-    const hasChoice = !!currentData.presaleFormChoice;
-    if(!hasLink && !hasChoice){
-      showToast("Please add your presale link, or choose from the two options below.");
-      return;
-    }
-    if(hasLink && !isPlausibleUrl(currentData.presaleLink.trim())){
-      const first = document.querySelector(`[data-key="presaleLink"]`);
-      if(first){
-        first.style.outline = "2px solid var(--terracotta)";
-        first.style.borderRadius = "8px";
-        first.focus();
-        setTimeout(()=>{ first.style.outline = ""; }, 4000);
-      }
-      showToast("That doesn't quite look like a full web address — it should start with https://");
-      return;
-    }
   }
   const nextId = step.next ? step.next(currentData) : "done";
   currentData.meta.currentStep = nextId;
