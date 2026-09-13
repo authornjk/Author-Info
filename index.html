@@ -401,8 +401,9 @@
 
   .home-link{
     display:block;
+    width:fit-content;
+    margin:26px auto 0;
     text-align:center;
-    margin-top:26px;
     font-family:'Montserrat',sans-serif;
     font-size:12.5px;
     letter-spacing:.1em;
@@ -3874,7 +3875,7 @@ function buildPreorderBookEntryCollapsed(book, index, onChange){
     const seriesSpan = document.createElement('div');
     seriesSpan.style.cssText = "font-weight:700;font-size:13px;flex:1 1 90px;min-width:70px;"
       + "overflow:hidden;text-overflow:ellipsis;white-space:nowrap;";
-    seriesSpan.textContent = book.seriesName;
+    seriesSpan.innerHTML = `<span style="font-weight:400;opacity:.7;">Series Name</span> ${escapeAttr(book.seriesName)}`;
     row2.appendChild(seriesSpan);
 
     const bookOf = document.createElement('div');
@@ -4067,9 +4068,11 @@ function buildPreorderBookEntryExpanded(book, index, onChange, onTitleChange){
 
     const numField = document.createElement('div');
     numField.className = "field";
-    numField.innerHTML = `<label>Book ___ of ___</label>`;
     const numRow = document.createElement('div');
     numRow.style.cssText = "display:flex;align-items:center;gap:8px;";
+    const bookLabel = document.createElement('span');
+    bookLabel.textContent = "Book";
+    bookLabel.style.cssText = "font-weight:600;";
     const bookNumInp = document.createElement('input');
     bookNumInp.type = "number";
     bookNumInp.min = "1";
@@ -4086,6 +4089,7 @@ function buildPreorderBookEntryExpanded(book, index, onChange, onTitleChange){
     totalInp.placeholder = "#";
     totalInp.value = book.seriesTotalBooks || "";
     totalInp.addEventListener('input', ()=>{ book.seriesTotalBooks = totalInp.value; });
+    numRow.appendChild(bookLabel);
     numRow.appendChild(bookNumInp);
     numRow.appendChild(ofSpan);
     numRow.appendChild(totalInp);
@@ -4216,7 +4220,7 @@ function buildBookCoverUpload(book){
 
   if(book.coverUrl){
     const idMatch = book.coverUrl.match(/\/d\/([^/]+)/);
-    preview.src = idMatch ? `https://drive.google.com/uc?export=view&id=${idMatch[1]}` : book.coverUrl;
+    preview.src = idMatch ? `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w800` : book.coverUrl;
     preview.style.display = "block";
   } else if(book.coverUploadedAt){
     localCache.get(fileStorageKey(fileKey), true).then(res=>{
@@ -4268,7 +4272,7 @@ function renderPreorderPreview(){
       if(book.coverUrl){
         const idMatch = book.coverUrl.match(/\/d\/([^/]+)/);
         const img = document.createElement('img');
-        img.src = idMatch ? `https://drive.google.com/uc?export=view&id=${idMatch[1]}` : book.coverUrl;
+        img.src = idMatch ? `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w800` : book.coverUrl;
         img.style.cssText = "width:100%;height:100%;object-fit:cover;";
         coverWrap.appendChild(img);
       } else {
@@ -4297,6 +4301,13 @@ function renderPreorderPreview(){
     });
     card.appendChild(grid);
   }
+
+  const backToBooksBtn = document.createElement('button');
+  backToBooksBtn.className = "btn btn-secondary btn-compact";
+  backToBooksBtn.style.marginTop = "16px";
+  backToBooksBtn.textContent = "Return to adding presale books";
+  backToBooksBtn.onclick = () => goToSection("preorder-books");
+  card.appendChild(backToBooksBtn);
 
   const link = document.createElement('div');
   link.className = "home-link";
@@ -5139,15 +5150,18 @@ function statusOptionHtml(text){
   if(idx === -1) return text;
   const main = text.slice(0, idx);
   const paren = text.slice(idx + 1);
-  return `${main} <span style="font-weight:400;font-size:12px;opacity:.7;">${paren}</span>`;
+  return `<span style="display:flex;flex-direction:column;align-items:center;text-align:center;width:100%;">`
+    + `<span>${main}</span>`
+    + `<span style="font-weight:400;font-size:12px;opacity:.7;margin-top:4px;">${paren}</span>`
+    + `</span>`;
 }
 
 // Builds the divider + oval status-toggle buttons used at the bottom of
 // list-style screens (Links, Donated Titles, Books You Will Sell, Presale
-// Books) to mark that list complete or still-in-progress. Sized to their
-// text rather than stretched full-width, and carries its own top divider
-// so it reads as its own thing sitting below the last real question,
-// not a continuation of it. Insert the returned element right before the
+// Books) to mark that list complete or still-in-progress. The row shrink-
+// wraps to its widest button (not the full card) and both buttons stretch
+// to match that width, so they read as a matched pair rather than two
+// differently-sized pills. Insert the returned element right before the
 // save-prompt text.
 function buildStatusToggle(dataKey, options, onChangeExtra){
   const wrap = document.createElement('div');
@@ -5155,7 +5169,7 @@ function buildStatusToggle(dataKey, options, onChangeExtra){
 
   const row = document.createElement('div');
   row.className = "btn-row";
-  row.style.cssText = "flex-direction:column;align-items:flex-start;margin-top:0;";
+  row.style.cssText = "display:inline-flex;flex-direction:column;align-items:stretch;gap:12px;margin-top:0;";
 
   function restyleAll(){
     Array.from(row.children).forEach((b, i)=>{
@@ -5250,7 +5264,7 @@ function buildFileUpload(f){
   if(currentData[urlKey]){
     // Server (Drive) has the real file — show it directly, no round-trip needed.
     const idMatch = currentData[urlKey].match(/\/d\/([^/]+)/);
-    preview.src = idMatch ? `https://drive.google.com/uc?export=view&id=${idMatch[1]}` : currentData[urlKey];
+    preview.src = idMatch ? `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w800` : currentData[urlKey];
     preview.style.display = "block";
   } else if(currentData[f.key + "UploadedAt"]){
     localCache.get(fileStorageKey(f.key), true).then(res=>{
