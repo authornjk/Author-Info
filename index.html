@@ -470,6 +470,32 @@
   }
   @keyframes save-spin{ to{ transform:rotate(360deg); } }
 
+  .info-modal-overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(12,30,61,0.45);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    z-index:90;
+    padding:24px;
+  }
+  .info-modal-card{
+    background:#fff;
+    border-radius:16px;
+    padding:28px 24px;
+    max-width:380px;
+    text-align:center;
+    box-shadow:0 8px 30px rgba(12,30,61,0.25);
+  }
+  .info-modal-text{
+    font-family:'Lora',serif;
+    font-size:15px;
+    line-height:1.6;
+    color:var(--navy);
+    margin-bottom:18px;
+  }
+
   .dropoff-card{
     display:block;
     position:relative;
@@ -1236,7 +1262,6 @@ let cameFromWhatsLeft = false;
 let cameFromNavSubmenu = false;
 let whatsLeftScrollY = null;
 let sectionScrollToKey = null;
-let preorderJustDeclinedNotice = false;
 // Purely in-memory (not persisted) so the To-Do List always shows everything
 // again the next time the page loads — this only sticks around while
 // navigating within the current session.
@@ -1315,6 +1340,27 @@ function showToast(msg){
   t.textContent = msg;
   t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'), 2200);
+}
+
+// Simple dismissible popup for a short message that deserves more attention
+// than a toast — a "Got it" pill button closes it and returns to whatever
+// screen is underneath.
+function showInfoModal(message){
+  const overlay = document.createElement('div');
+  overlay.className = "info-modal-overlay";
+  const cardEl = document.createElement('div');
+  cardEl.className = "info-modal-card";
+  const text = document.createElement('div');
+  text.className = "info-modal-text";
+  text.textContent = message;
+  cardEl.appendChild(text);
+  const btn = document.createElement('button');
+  btn.className = "btn btn-primary btn-compact";
+  btn.textContent = "Got it";
+  btn.onclick = () => overlay.remove();
+  cardEl.appendChild(btn);
+  overlay.appendChild(cardEl);
+  document.body.appendChild(overlay);
 }
 
 function render(){
@@ -1863,7 +1909,12 @@ function renderDates(){
 /* ---------- SCREEN: LOOKUPS ---------- */
 /* ---------- SCREEN: WHAT ELSE DO I NEED TO DO? ---------- */
 function isFieldFilled(key, type){
-  if(type === "file") return !!currentData[key + "UploadedAt"];
+  // headshotUploadedAt/logoUploadedAt only ever exist in memory for the
+  // session that did the upload — they're never actually saved to the
+  // sheet. The Url field is what's really persisted, so that's the
+  // reliable signal after a reload; UploadedAt is kept as a same-session
+  // fallback in case the Url hasn't round-tripped through a save yet.
+  if(type === "file") return !!(currentData[key + "Url"] || currentData[key + "UploadedAt"]);
   const v = currentData[key];
   return v !== undefined && v !== null && String(v).trim() !== "";
 }
@@ -1921,7 +1972,7 @@ function computeChecklist(){
     title: "Your BINGO Book",
     rows: [
       {label:"BINGO square book", preview: isFieldFilled("bingoBook") ? truncatePreview(d.bingoBook, 60) : null,
-       done:isFieldFilled("bingoBook"), required:true, target:"bingo-book", showEditWhenDone:true}
+       done:isFieldFilled("bingoBook"), required:true, target:"bingo-book"}
     ]
   });
 
@@ -1997,10 +2048,10 @@ function computeChecklist(){
     const hasSellingTitles = sellingTitlesFilled();
     let sellRow;
     if(hasSellingTitles && d.sellingListStatus === "tentative"){
-      sellRow = {label:"Books you will sell at the Soirée", done:true, tentative:true, required:true, target:"books-selling", showEditWhenDone:true, preview:"Make final edits by Feb 1."};
+      sellRow = {label:"Books you will sell at the Soirée", done:true, tentative:true, required:true, target:"books-selling", preview:"Make final edits by Feb 1."};
     } else {
       sellRow = {label:"Titles list", preview: hasSellingTitles ? truncatePreview(sellingTitlesText().replace(/\n/g," / "), 60) : null,
-        done:hasSellingTitles, required:true, target:"books-selling", showEditWhenDone:true, addLabel:"None listed"};
+        done:hasSellingTitles, required:true, target:"books-selling", addLabel:"None listed"};
     }
     sections.push({ title:"Books You Will Sell at the Soirée", rows:[sellRow] });
   }
@@ -2020,7 +2071,7 @@ function computeChecklist(){
   if(d.preorderPlan === "Yes"){
     const hasPreorderBooks = Array.isArray(d.preorderBooksList) && d.preorderBooksList.some(b => b && b.title && b.title.trim());
     const row = {label:"Presale Books", preview: hasPreorderBooks ? preorderBooksText().replace(/\n/g," / ") : null,
-      done: d.preorderBooksListStatus === "complete", required:true, target:"preorder-books", showEditWhenDone:true, addLabel:"Need to add"};
+      done: d.preorderBooksListStatus === "complete", required:true, target:"preorder-books", addLabel:"Need to add"};
     const rows = [row];
 
     // Per-book required fields: title, cover, and regular price. Only
@@ -2079,11 +2130,11 @@ function computeChecklist(){
       const hasTitles = donatedTitlesFilled();
       const hasCount = isFieldFilled("donatedCount");
       if(hasTitles && d.donationListStatus === "tentative"){
-        row = {label:"Prizes you are donating", done:true, tentative:true, required:true, target:"donation-titles", showEditWhenDone:true, preview:"Make final edits by Mar 1."};
+        row = {label:"Prizes you are donating", done:true, tentative:true, required:true, target:"donation-titles", preview:"Make final edits by Mar 1."};
       } else if(hasTitles){
-        row = {label:"Donated books", preview: truncatePreview(donatedTitlesText().replace(/\n/g," / "), 60), done:true, required:true, target:"donation-titles", showEditWhenDone:true};
+        row = {label:"Donated books", preview: truncatePreview(donatedTitlesText().replace(/\n/g," / "), 60), done:true, required:true, target:"donation-titles"};
       } else if(hasCount){
-        row = {label:"Donated books", preview: truncatePreview(d.donatedCount, 60), done:true, required:true, target:"donation-knowledge", showEditWhenDone:true};
+        row = {label:"Donated books", preview: truncatePreview(d.donatedCount, 60), done:true, required:true, target:"donation-knowledge"};
       } else {
         row = {label:"Donated books", done:false, required:true, target:"donation-knowledge", addLabel:"Have not added"};
       }
@@ -4079,12 +4130,20 @@ function preorderPriceDisplay(labelText, value, missingState){
 
 function buildPreorderBookEntryCollapsed(book, index, onChange){
   const wrap = document.createElement('div');
+  wrap.dataset.bookEntryId = book.id;
   wrap.style.cssText = "padding:10px 12px;margin-bottom:10px;"
     + "border:1px solid rgba(12,30,61,0.1);border-radius:10px;background:#fff;cursor:pointer;";
   wrap.onclick = () => {
     currentData.preorderBooksList.forEach(b => { b._expanded = false; });
     book._expanded = true;
     onChange();
+    // Without this, the page keeps its old scroll position while the
+    // newly-expanded box grows beneath it — leaving the view sitting on
+    // the box's middle/bottom instead of its top.
+    requestAnimationFrame(()=>{
+      const el = document.querySelector(`[data-book-entry-id="${book.id}"]`);
+      if(el) el.scrollIntoView({block: "start", behavior: "smooth"});
+    });
   };
 
   const row1 = document.createElement('div');
@@ -4170,6 +4229,7 @@ function getSeriesInfo(name, currentBook){
 function buildPreorderBookEntryExpanded(book, index, onChange, onTitleChange){
   const wrap = document.createElement('div');
   wrap.className = "card";
+  wrap.dataset.bookEntryId = book.id;
   wrap.style.cssText = "background:var(--cream,#F7EFE1);margin-bottom:14px;padding:16px;box-shadow:none;border:1px solid rgba(12,30,61,0.08);";
 
   const collapseRow = document.createElement('div');
@@ -4259,7 +4319,13 @@ function buildPreorderBookEntryExpanded(book, index, onChange, onTitleChange){
     if(book.isSeries !== "Yes") return;
 
     const existingNames = getExistingSeriesNames(book);
-    const isKnownName = existingNames.indexOf(book.seriesName) !== -1;
+    // Explicit tri-state: undefined (nothing picked yet), "existing", or
+    // "new" — inferred once from whatever's already saved, then tracked by
+    // this flag from there so nothing looks pre-selected until the author
+    // actually picks something.
+    if(book._seriesPickMode === undefined){
+      book._seriesPickMode = (book.seriesName && existingNames.indexOf(book.seriesName) !== -1) ? "existing" : undefined;
+    }
 
     const nameField = document.createElement('div');
     nameField.className = "field";
@@ -4269,36 +4335,47 @@ function buildPreorderBookEntryExpanded(book, index, onChange, onTitleChange){
       const radioGroup = document.createElement('div');
       radioGroup.className = "radio-group";
 
-      function pickSeries(value){
-        if(value === "__new__"){
-          book.seriesName = "";
-        } else {
-          book.seriesName = value;
-          // Pull in what's already known about this series from its other
-          // books — total count and set pricing shouldn't need retyping.
-          const info = getSeriesInfo(value, book);
-          if(info){
-            if(info.totalBooks) book.seriesTotalBooks = info.totalBooks;
-            if(info.regularPrice) book.seriesRegularPrice = info.regularPrice;
-            if(info.soireePrice) book.seriesSoireePrice = info.soireePrice;
-          }
+      function pickExisting(value){
+        book._seriesPickMode = "existing";
+        book.seriesName = value;
+        // Pull in what's already known about THIS series from its other
+        // books — total count and set pricing shouldn't need retyping.
+        const info = getSeriesInfo(value, book);
+        if(info){
+          if(info.totalBooks) book.seriesTotalBooks = info.totalBooks;
+          if(info.regularPrice) book.seriesRegularPrice = info.regularPrice;
+          if(info.soireePrice) book.seriesSoireePrice = info.soireePrice;
         }
+        renderSeriesDetails();
+      }
+      function pickNew(){
+        // A brand-new series starts completely blank — never inherits
+        // another series' book count or pricing.
+        book._seriesPickMode = "new";
+        book.seriesName = "";
+        book.seriesTotalBooks = "";
+        book.seriesRegularPrice = "";
+        book.seriesSoireePrice = "";
         renderSeriesDetails();
       }
 
       const allOptions = existingNames.map(n => ({value:n, text:n}))
         .concat([{value:"__new__", text:"+ Add another series"}]);
       allOptions.forEach(opt=>{
-        const isSelected = isKnownName ? (book.seriesName === opt.value) : (opt.value === "__new__");
+        const isSelected = opt.value === "__new__"
+          ? book._seriesPickMode === "new"
+          : (book._seriesPickMode === "existing" && book.seriesName === opt.value);
         const optWrap = document.createElement('label');
         optWrap.className = "radio-option" + (isSelected ? " selected" : "");
         optWrap.innerHTML = `<input type="radio" name="seriesPick_${book.id}" value="${escapeAttr(opt.value)}" ${isSelected?'checked':''}><span>${opt.text}</span>`;
-        optWrap.querySelector('input').addEventListener('change', ()=>{ pickSeries(opt.value); });
+        optWrap.querySelector('input').addEventListener('change', ()=>{
+          if(opt.value === "__new__") pickNew(); else pickExisting(opt.value);
+        });
         radioGroup.appendChild(optWrap);
       });
       nameField.appendChild(radioGroup);
 
-      if(!isKnownName){
+      if(book._seriesPickMode === "new"){
         const nameInp = document.createElement('input');
         nameInp.type = "text";
         nameInp.placeholder = "Series name";
@@ -4308,6 +4385,7 @@ function buildPreorderBookEntryExpanded(book, index, onChange, onTitleChange){
         nameField.appendChild(nameInp);
       }
     } else {
+      book._seriesPickMode = "new";
       const nameInp = document.createElement('input');
       nameInp.type = "text";
       nameInp.placeholder = "Series name";
@@ -4556,8 +4634,50 @@ function renderPreorderPreview(){
       info.innerHTML = `
         <div style="font-family:'Cormorant Garamond',serif;font-size:19px;font-weight:600;">${escapeAttr(book.title)}</div>
         <div style="margin:4px 0;">${priceHtml}</div>
-        ${book.blurb ? `<div style="font-size:13px;color:#555;line-height:1.4;">${escapeAttr(book.blurb)}</div>` : ""}
       `;
+
+      if(book.tagLine && book.tagLine.trim()){
+        const tagLineEl = document.createElement('div');
+        tagLineEl.style.cssText = "font-weight:700;font-size:13px;color:var(--navy);margin-top:10px;";
+        tagLineEl.textContent = book.tagLine;
+        info.appendChild(tagLineEl);
+      }
+
+      if(book.blurb && book.blurb.trim()){
+        const blurbWrap = document.createElement('div');
+        blurbWrap.style.cssText = "margin-top:6px;";
+
+        const blurbText = document.createElement('div');
+        blurbText.textContent = book.blurb;
+        blurbText.style.cssText = "font-size:13px;color:#555;line-height:1.4;"
+          + "display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden;";
+        blurbWrap.appendChild(blurbText);
+
+        const toggleLink = document.createElement('div');
+        toggleLink.textContent = "\u2026 show more";
+        toggleLink.style.cssText = "font-size:12px;color:var(--terracotta);font-weight:600;cursor:pointer;margin-top:3px;display:none;";
+        let expanded = false;
+        toggleLink.onclick = () => {
+          expanded = !expanded;
+          if(expanded){
+            blurbText.style.webkitLineClamp = "unset";
+            toggleLink.textContent = "\u2026 show less";
+          } else {
+            blurbText.style.webkitLineClamp = "3";
+            toggleLink.textContent = "\u2026 show more";
+          }
+        };
+        blurbWrap.appendChild(toggleLink);
+        info.appendChild(blurbWrap);
+
+        // Only offer the toggle if the blurb is actually being cut off —
+        // a short blurb shouldn't show a pointless "show more" link.
+        requestAnimationFrame(()=>{
+          if(blurbText.scrollHeight > blurbText.clientHeight + 1){
+            toggleLink.style.display = "block";
+          }
+        });
+      }
       tile.appendChild(info);
       grid.appendChild(tile);
     });
@@ -4591,14 +4711,6 @@ function renderPreorderStatus(){
     <h1 class="section-title">Preselling Books</h1>
   `;
 
-  if(preorderJustDeclinedNotice){
-    const notice = document.createElement('div');
-    notice.className = "info-box";
-    notice.textContent = "Any information about your books you have already entered will not be deleted. So if you change your mind in the future and want to do a presale, you will not need to reenter that information.";
-    card.appendChild(notice);
-    preorderJustDeclinedNotice = false;
-  }
-
   const plan = currentData.preorderPlan;
 
   if(plan === "Yes"){
@@ -4621,8 +4733,8 @@ function renderPreorderStatus(){
     optOutBtn.onclick = async () => {
       currentData.preorderPlan = "No";
       await saveAuthorData(currentAuthor, currentData);
-      preorderJustDeclinedNotice = true;
       render();
+      showInfoModal("Any information about your books you have already entered will not be deleted. So if you change your mind in the future and want to do a presale, you will not need to reenter that information.");
     };
     card.appendChild(optOutBtn);
 
@@ -4685,7 +4797,8 @@ function notifOptionalGaps(){
   const gaps = [];
   if(!isFieldFilled("logo", "file")) gaps.push({key:"logo", label:"Add your logo"});
   if(MISC_FUN_KEYS.some(k => !isFieldFilled(k))) gaps.push({key:"miscFun", label:'The Misc Fun Stuff (those were the fun questions like "If you were to write a cheesy musical about your life, what would it be called?")'});
-  if(NOTIF_LINKS_KEYS.some(k => !isFieldFilled(k))) gaps.push({key:"links", label:"Links to places readers can find you"});
+  const linksMarkedDone = currentData.linksListStatus === "That is all the links I will be adding (will mark this completed on your To-Do list)";
+  if(!linksMarkedDone && NOTIF_LINKS_KEYS.some(k => !isFieldFilled(k))) gaps.push({key:"links", label:"Links to places readers can find you"});
   return gaps;
 }
 
@@ -4723,9 +4836,9 @@ function renderNotifications(step){
     const note = document.createElement('div');
     note.className = "help";
     note.style.cssText = "margin-top:14px;line-height:1.6;";
-    note.innerHTML = "Right now it is set for you to get reminders until you have completed all the required items."
+    note.innerHTML = "Right now it is set for you to get reminders until you have completed all the <em>required</em> items."
       + (optionalGaps.length
-          ? " The <em>optional</em> items are listed below. If you'd like to make sure you get any of those done as well, select any of them you'd like to make sure you get done, and they will be added to your reminder email as well."
+          ? " The optional items are listed below. If you'd like to make sure you get any of those done as well, select any of them you'd like to make sure you get done, and the reminder emails will continue until they are done as well."
           : "");
     wrap.appendChild(note);
 
@@ -4891,7 +5004,7 @@ function renderNotifications(step){
     intro.style.cssText = "margin-top:10px;line-height:1.6;";
     let html = "I want to double check with you about email reminders.";
     if(incompleteRequired.length){
-      html += `<br><br>You have some required information (${incompleteRequired.map(l=>escapeAttr(l)).join(", ")}) that you still need to fill out.`;
+      html += `<br><br>You have some required information (${incompleteRequired.map(l=>escapeAttr(l)).join(", ")}) that you still need to fill out and might want reminders for.`;
     }
     intro.innerHTML = html;
     dynamicWrap.appendChild(intro);
@@ -4901,7 +5014,7 @@ function renderNotifications(step){
       optPara.className = "help";
       optPara.style.marginTop = "6px";
       const also = incompleteRequired.length ? "also " : "";
-      optPara.textContent = `There are ${also}some optional items you might want to come back and add.`;
+      optPara.textContent = `There are ${also}some optional items you might want to come back and finish, and you might want a reminder for one of those as well.`;
       dynamicWrap.appendChild(optPara);
     }
 
@@ -4918,8 +5031,16 @@ function renderNotifications(step){
       btnRow.style.marginTop = "14px";
       const yesBtn = document.createElement('button');
       yesBtn.className = "btn btn-primary btn-compact";
-      yesBtn.textContent = "I'd like to get a reminder email";
-      yesBtn.onclick = () => { currentData.reminderOptIn = "Yes"; renderDynamic(); };
+      yesBtn.textContent = "Yes, please send me reminder emails";
+      yesBtn.onclick = () => {
+        currentData.reminderOptIn = "Yes";
+        // Nothing should look pre-selected — clear out any frequency/day/
+        // time left over from a previous Yes that was later changed to No.
+        currentData.reminderFrequency = "";
+        currentData.reminderDay = "";
+        currentData.reminderTime = "";
+        renderDynamic();
+      };
       const noBtn = document.createElement('button');
       noBtn.className = "btn btn-secondary btn-compact";
       noBtn.textContent = "No thanks.";
