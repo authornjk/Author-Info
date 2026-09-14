@@ -1265,7 +1265,7 @@ let sectionScrollToKey = null;
 // Purely in-memory (not persisted) so the To-Do List always shows everything
 // again the next time the page loads — this only sticks around while
 // navigating within the current session.
-let todoShowOnlyRequired = false;
+let todoShowOnlyOpen = false;
 
 function goToSectionFromChecklist(id, scrollToKey){
   whatsLeftScrollY = window.scrollY;
@@ -2290,12 +2290,12 @@ function renderWhatsLeft(){
   const toggleBtn = document.createElement('button');
   toggleBtn.className = "btn btn-secondary btn-tiny";
   toggleBtn.style.marginBottom = "18px";
-  toggleBtn.textContent = todoShowOnlyRequired ? "Show all items" : "Show only required items";
-  toggleBtn.onclick = () => { todoShowOnlyRequired = !todoShowOnlyRequired; render(); };
+  toggleBtn.textContent = todoShowOnlyOpen ? "Show all items" : "Show all open items";
+  toggleBtn.onclick = () => { todoShowOnlyOpen = !todoShowOnlyOpen; render(); };
   card.appendChild(toggleBtn);
 
   sections.forEach(section => {
-    const rows = todoShowOnlyRequired ? section.rows.filter(r => r.required) : section.rows;
+    const rows = todoShowOnlyOpen ? section.rows.filter(r => !r.done) : section.rows;
     if(!rows.length) return;
     const wrap = document.createElement('div');
     wrap.className = "checklist-section";
