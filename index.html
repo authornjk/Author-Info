@@ -3700,18 +3700,40 @@ function renderPreorderFromSelling(step){
     const checked = Array.from(list.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.dataset.title);
     if(!Array.isArray(currentData.preorderBooksList)) currentData.preorderBooksList = [];
     const existing = currentData.preorderBooksList.map(b => (b && b.title ? b.title.trim().toLowerCase() : ""));
+    const touchedIds = [];
     checked.forEach(title=>{
-      if(existing.indexOf(title.trim().toLowerCase()) === -1){
+      const idx = existing.indexOf(title.trim().toLowerCase());
+      if(idx === -1){
         const newBook = emptyPreorderBook();
         newBook.title = title;
         newBook._expanded = false;
         currentData.preorderBooksList.push(newBook);
         existing.push(title.trim().toLowerCase());
+        touchedIds.push(newBook.id);
+      } else {
+        touchedIds.push(currentData.preorderBooksList[idx].id);
       }
     });
-    // Top book box expanded, per request — the rest collapsed so the next
-    // screen doesn't open crazy-long.
-    currentData.preorderBooksList.forEach((b, i) => { b._expanded = (i === 0); });
+
+    // A blank leftover entry (e.g. the starter box from an earlier, empty
+    // visit to this screen) shouldn't sit there once real titles exist.
+    if(touchedIds.length){
+      currentData.preorderBooksList = currentData.preorderBooksList.filter(b=>{
+        const isBlank = !(b.title && b.title.trim()) && !b.coverUrl && !b.regularPrice && !b.soireePrice && !b.blurb && !b.tagLine;
+        return !isBlank;
+      });
+    }
+
+    // Expand the first book that actually came from this checklist (by id,
+    // not array position — a stray entry could otherwise end up at index 0
+    // and get expanded instead of an actual selected title).
+    currentData.preorderBooksList.forEach(b => { b._expanded = false; });
+    if(touchedIds.length){
+      const firstTouched = currentData.preorderBooksList.find(b => b.id === touchedIds[0]);
+      if(firstTouched) firstTouched._expanded = true;
+    } else if(currentData.preorderBooksList.length){
+      currentData.preorderBooksList[0]._expanded = true;
+    }
   }
 
   const enteredViaShortcut = cameFromWhatsLeft || cameFromNavSubmenu;
