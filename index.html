@@ -744,14 +744,14 @@ const STEPS = {
 
   "books-selling": {
     title: "Books You Will Sell at the Soirée", icon: FLOURISH.book,
-    sub: "A list of all titles being sold by all authors will be given to all attendees.<br><br>They will be displayed in the order you enter them.",
+    sub: "A list of all titles being sold by authors will be given to all attendees. They will be made aware that inventory will be limited and there's no guarantee any book will be available by the time they get to an author.<br><br>They will be displayed in the order you enter them.",
     customType: "sellingTitles",
     next: () => "preorder-plan"
   },
 
   "preorder-plan": {
     title: "Presale Books for the Soirée", icon: FLOURISH.bookStack,
-    sub: "Preselling books at the Soirée got a major glow-up!<br><br>It's never been easier for attendees to preorder books.<br><br>Will you have any books available for presale before the Soirée?",
+    sub: "Preselling books at the Soirée got a major glow-up! It's never been easier for attendees to preorder books.<br><br>Will you have any books available for presale before the Soirée?",
     fields: [
       {key:"preorderPlan", label:"", type:"radio", required:true, options:[
         "Yes",
@@ -878,6 +878,7 @@ const STEPS = {
     ],
     hideSavePrompt: true,
     continueLabel: "Finish",
+    goHomeOnFinish: true,
     next: () => "done"
   },
 
@@ -2005,7 +2006,25 @@ function computeChecklist(){
     const hasPreorderBooks = Array.isArray(d.preorderBooksList) && d.preorderBooksList.some(b => b && b.title && b.title.trim());
     const row = {label:"Presale Books", preview: hasPreorderBooks ? preorderBooksText().replace(/\n/g," / ") : null,
       done: d.preorderBooksListStatus === "complete", required:true, target:"preorder-books", showEditWhenDone:true, addLabel:"Need to add"};
-    sections.push({ title:"Presale Books", rows:[row] });
+    const rows = [row];
+
+    // Per-book required fields: title, cover, and regular price. Only
+    // flagged for books that at least have a title (so a fully-blank
+    // leftover entry doesn't show up as three separate to-dos).
+    (d.preorderBooksList || []).forEach(b=>{
+      if(!b || !b.title || !b.title.trim()) return;
+      const missing = [];
+      if(!b.coverUrl) missing.push("cover");
+      if(!b.regularPrice || b.regularPrice === "") missing.push("price");
+      if(missing.length){
+        rows.push({
+          label: `"${truncatePreview(b.title, 30)}" is missing a ${missing.join(" and ")}`,
+          done:false, required:true, target:"preorder-books"
+        });
+      }
+    });
+
+    sections.push({ title:"Presale Books", rows });
   } else if(d.preorderPlan === "No"){
     sections.push({
       title: "Presale Books",
@@ -2663,7 +2682,16 @@ function renderSection(){
     const saveNext = document.createElement('button');
     saveNext.className = "btn btn-primary btn-compact";
     saveNext.textContent = step.continueLabel || "Yes, save & continue";
-    saveNext.onclick = () => advanceStep(step);
+    saveNext.onclick = step.goHomeOnFinish
+      ? async () => {
+          collectFieldValues(step);
+          currentData.meta.currentStep = "done";
+          await saveAuthorData(currentAuthor, currentData);
+          showToast("Saved!");
+          currentScreen = "home";
+          render();
+        }
+      : () => advanceStep(step);
     async function saveExitHandler(){
       collectFieldValues(step);
       if(currentStepId === "links"){
@@ -2725,6 +2753,14 @@ function renderSection(){
       }
       card.querySelectorAll(`input[name="${cfg.watchField}"]`).forEach(r => r.addEventListener('change', updateDynBtnVisibility));
       updateDynBtnVisibility();
+    }
+
+    if(cameFromNavSubmenu){
+      const nextSectionLink = document.createElement('div');
+      nextSectionLink.className = "home-link";
+      nextSectionLink.textContent = "Save & go to the next section";
+      nextSectionLink.onclick = () => { cameFromNavSubmenu = false; advanceStep(step); };
+      card.appendChild(nextSectionLink);
     }
 
     const firstLink = document.createElement('div');
@@ -3349,6 +3385,14 @@ function renderDonationTitles(step){
 
     appendMainScreenLink(card, "Save & return to main screen");
   } else {
+    if(cameFromNavSubmenu){
+      const nextSectionLink = document.createElement('div');
+      nextSectionLink.className = "home-link";
+      nextSectionLink.textContent = "Save & go to the next section";
+      nextSectionLink.onclick = () => { cameFromNavSubmenu = false; advanceStep(step); };
+      card.appendChild(nextSectionLink);
+    }
+
     const firstLink = document.createElement('div');
     firstLink.className = "home-link";
     firstLink.textContent = cameFromWhatsLeft ? "Save & return to To-Do list" : "Save & choose a different section";
@@ -3540,6 +3584,14 @@ function renderSellingTitles(step){
 
     appendMainScreenLink(card, "Save & return to main screen");
   } else {
+    if(cameFromNavSubmenu){
+      const nextSectionLink = document.createElement('div');
+      nextSectionLink.className = "home-link";
+      nextSectionLink.textContent = "Save & go to the next section";
+      nextSectionLink.onclick = () => { cameFromNavSubmenu = false; advanceStep(step); };
+      card.appendChild(nextSectionLink);
+    }
+
     const firstLink = document.createElement('div');
     firstLink.className = "home-link";
     firstLink.textContent = cameFromWhatsLeft ? "Save & return to To-Do list" : "Save & choose a different section";
@@ -3576,7 +3628,7 @@ function renderSellingTitles(step){
 function emptyPreorderBook(){
   return {
     id: 'pb_' + Date.now().toString(36) + Math.random().toString(36).slice(2,8),
-    title: "", regularPrice: "", soireePrice: "", blurb: "",
+    title: "", regularPrice: "", soireePrice: "", tagLine: "", blurb: "",
     coverUrl: "", coverUploadedAt: null,
     isSeries: "", seriesName: "", seriesBookNumber: "", seriesTotalBooks: "",
     seriesRegularPrice: "", seriesSoireePrice: "",
@@ -3593,7 +3645,8 @@ function renderPreorderBooks(step){
     <div class="eyebrow">Bookish Summer Soirée</div>
     <h1 class="section-title">${titleImg}${step.title}</h1>
     <div class="help" style="margin-top:10px;line-height:1.5;">
-      <strong>What it will look like for attendees:</strong> All books available for preorder will be in one place. No more needing to go in and out of each preorder form. It will be like a mini-amazon shopping experience: One cart. One transaction. All the authors.<br><br>
+      It's going to be easier than ever for attendees to preorder your books!<br><br>
+      <strong>What it will look like for attendees:</strong> All books available for preorder will be in one place. No more needing to go in and out of each preorder form. They can look at all available books, or search by author or book title. It will be like a mini-amazon shopping experience: One cart. One transaction. All the authors.<br><br>
       <strong>What it will look like for you:</strong> You will upload your title, cover, blurb, and price. You'll get email updates as your books sell, and you can check your sales anytime from your personalized Home Screen right here in this app. Payments are sent to your Stripe account automatically with every sale — you choose whether Stripe pays out to your bank weekly, daily, or monthly, right from your own Stripe dashboard. So you don't have to keep track of who has paid, or worry about collecting money.<br><br>
       If you have an unpublished book that will be available by the Soirée, be sure to include it.
     </div>
@@ -3727,6 +3780,14 @@ function renderPreorderBooks(step){
 
     appendMainScreenLink(card, "Save & return to main screen");
   } else {
+    if(cameFromNavSubmenu){
+      const nextSectionLink = document.createElement('div');
+      nextSectionLink.className = "home-link";
+      nextSectionLink.textContent = "Save & go to the next section";
+      nextSectionLink.onclick = () => { cameFromNavSubmenu = false; advanceStep(step); };
+      card.appendChild(nextSectionLink);
+    }
+
     const firstLink = document.createElement('div');
     firstLink.className = "home-link";
     firstLink.textContent = cameFromWhatsLeft ? "Save & return to To-Do list" : "Save & choose a different section";
@@ -3787,7 +3848,7 @@ function statusIcon(state){
     span.style.background = "#fff";
     span.style.border = "2px solid #ddd";
     span.style.color = "#ccc";
-    span.textContent = "";
+    span.textContent = "\u2715";
   } else {
     span.style.background = "#fff";
     span.style.border = "2px solid var(--terracotta,#E4593F)";
@@ -3852,7 +3913,7 @@ function buildPreorderBookEntryCollapsed(book, index, onChange){
   priceGroup.style.cssText = "display:flex;align-items:center;gap:8px;";
   const priceLabel = document.createElement('span');
   priceLabel.textContent = "Price:";
-  priceLabel.style.cssText = "font-weight:700;font-size:12px;";
+  priceLabel.style.cssText = "font-weight:700;font-size:14px;";
   priceGroup.appendChild(priceLabel);
   priceGroup.appendChild(preorderPriceDisplay("Reg.:", book.regularPrice, false));
   priceGroup.appendChild(preorderPriceDisplay("Soirée:", book.soireePrice, "muted"));
@@ -3887,7 +3948,7 @@ function buildPreorderBookEntryCollapsed(book, index, onChange){
     seriesPriceGroup.style.cssText = "display:flex;align-items:center;gap:8px;";
     const seriesPriceLabel = document.createElement('span');
     seriesPriceLabel.textContent = "Price:";
-    seriesPriceLabel.style.cssText = "font-weight:700;font-size:12px;";
+    seriesPriceLabel.style.cssText = "font-weight:700;font-size:14px;";
     seriesPriceGroup.appendChild(seriesPriceLabel);
     seriesPriceGroup.appendChild(preorderPriceDisplay("Reg.:", book.seriesRegularPrice, "muted"));
     seriesPriceGroup.appendChild(preorderPriceDisplay("Soirée:", book.seriesSoireePrice, "muted"));
@@ -4016,27 +4077,17 @@ function buildPreorderBookEntryExpanded(book, index, onChange, onTitleChange){
     nameField.innerHTML = `<label>Series name</label>`;
 
     if(existingNames.length){
-      const sel = document.createElement('select');
-      const newOpt = document.createElement('option');
-      newOpt.value = "__new__";
-      newOpt.textContent = "+ Add another series";
-      sel.appendChild(newOpt);
-      existingNames.forEach(name=>{
-        const o = document.createElement('option');
-        o.value = name;
-        o.textContent = name;
-        if(book.seriesName === name) o.selected = true;
-        sel.appendChild(o);
-      });
-      if(!isKnownName) newOpt.selected = true;
-      sel.addEventListener('change', ()=>{
-        if(sel.value === "__new__"){
+      const radioGroup = document.createElement('div');
+      radioGroup.className = "radio-group";
+
+      function pickSeries(value){
+        if(value === "__new__"){
           book.seriesName = "";
         } else {
-          book.seriesName = sel.value;
+          book.seriesName = value;
           // Pull in what's already known about this series from its other
           // books — total count and set pricing shouldn't need retyping.
-          const info = getSeriesInfo(sel.value, book);
+          const info = getSeriesInfo(value, book);
           if(info){
             if(info.totalBooks) book.seriesTotalBooks = info.totalBooks;
             if(info.regularPrice) book.seriesRegularPrice = info.regularPrice;
@@ -4044,8 +4095,19 @@ function buildPreorderBookEntryExpanded(book, index, onChange, onTitleChange){
           }
         }
         renderSeriesDetails();
+      }
+
+      const allOptions = existingNames.map(n => ({value:n, text:n}))
+        .concat([{value:"__new__", text:"+ Add another series"}]);
+      allOptions.forEach(opt=>{
+        const isSelected = isKnownName ? (book.seriesName === opt.value) : (opt.value === "__new__");
+        const optWrap = document.createElement('label');
+        optWrap.className = "radio-option" + (isSelected ? " selected" : "");
+        optWrap.innerHTML = `<input type="radio" name="seriesPick_${book.id}" value="${escapeAttr(opt.value)}" ${isSelected?'checked':''}><span>${opt.text}</span>`;
+        optWrap.querySelector('input').addEventListener('change', ()=>{ pickSeries(opt.value); });
+        radioGroup.appendChild(optWrap);
       });
-      nameField.appendChild(sel);
+      nameField.appendChild(radioGroup);
 
       if(!isKnownName){
         const nameInp = document.createElement('input');
@@ -4140,9 +4202,20 @@ function buildPreorderBookEntryExpanded(book, index, onChange, onTitleChange){
   styleSeriesToggle();
   renderSeriesDetails();
 
+  const tagLineField = document.createElement('div');
+  tagLineField.className = "field";
+  tagLineField.innerHTML = `<label>Tag Line <span style="font-weight:400;opacity:.6;">(optional)</span></label>`;
+  const tagLineInp = document.createElement('input');
+  tagLineInp.type = "text";
+  tagLineInp.placeholder = "A short, punchy line about the book";
+  tagLineInp.value = book.tagLine || "";
+  tagLineInp.addEventListener('input', ()=>{ book.tagLine = tagLineInp.value; });
+  tagLineField.appendChild(tagLineInp);
+  wrap.appendChild(tagLineField);
+
   const blurbField = document.createElement('div');
   blurbField.className = "field";
-  blurbField.innerHTML = `<label>Blurb</label><div class="help">Optional but encouraged.</div>`;
+  blurbField.innerHTML = `<label>Blurb <span style="font-weight:400;opacity:.6;">(optional)</span></label><div class="help">Optional but encouraged.</div>`;
   const blurbTa = document.createElement('textarea');
   blurbTa.rows = 4;
   blurbTa.value = book.blurb || "";
@@ -4469,15 +4542,13 @@ function renderNotifications(step){
       const included = (currentData.reminderIncludeOptional || "").split(",").filter(Boolean);
       optionalGaps.forEach(gap=>{
         const optWrap = document.createElement('label');
-        optWrap.className = "radio-option" + (included.indexOf(gap.key) !== -1 ? " selected" : "");
-        optWrap.style.cssText = "display:flex;align-items:flex-start;gap:8px;";
-        optWrap.innerHTML = `<input type="checkbox" ${included.indexOf(gap.key) !== -1 ? "checked" : ""}><span>${gap.label}</span>`;
+        optWrap.style.cssText = "display:flex;align-items:flex-start;gap:8px;padding:5px 2px;font-family:'Lora',serif;font-size:14px;cursor:pointer;";
+        optWrap.innerHTML = `<input type="checkbox" style="margin-top:3px;accent-color:var(--terracotta);" ${included.indexOf(gap.key) !== -1 ? "checked" : ""}><span>${gap.label}</span>`;
         optWrap.querySelector('input').addEventListener('change', (e)=>{
           let list = (currentData.reminderIncludeOptional || "").split(",").filter(Boolean);
           if(e.target.checked){ if(list.indexOf(gap.key) === -1) list.push(gap.key); }
           else{ list = list.filter(k => k !== gap.key); }
           currentData.reminderIncludeOptional = list.join(",");
-          optWrap.classList.toggle('selected', e.target.checked);
         });
         wrap.appendChild(optWrap);
       });
@@ -4526,15 +4597,85 @@ function renderNotifications(step){
     const timeField = document.createElement('div');
     timeField.className = "field";
     timeField.innerHTML = `<label>What time?</label>`;
-    const timeInp = document.createElement('input');
-    timeInp.type = "time";
-    timeInp.value = currentData.reminderTime || "09:00";
-    if(!currentData.reminderTime) currentData.reminderTime = "09:00";
-    timeInp.addEventListener('change', ()=>{ currentData.reminderTime = timeInp.value; renderDynamic(); });
-    timeField.appendChild(timeInp);
+    timeField.appendChild(buildReminderTimeInput());
     wrap.appendChild(timeField);
 
     return wrap;
+  }
+
+  function buildReminderTimeInput(){
+    const timeWrap = document.createElement('div');
+    timeWrap.style.cssText = "display:flex;align-items:center;gap:6px;";
+
+    let h24 = 9, mm = 0;
+    if(currentData.reminderTime){
+      const parts = currentData.reminderTime.split(":");
+      if(parts.length === 2){
+        const ph = parseInt(parts[0], 10), pm = parseInt(parts[1], 10);
+        if(!isNaN(ph)) h24 = ph;
+        if(!isNaN(pm)) mm = pm;
+      }
+    }
+    const period = h24 >= 12 ? "PM" : "AM";
+    const h12 = ((h24 + 11) % 12) + 1;
+
+    const hInp = document.createElement('input');
+    hInp.type = "tel";
+    hInp.inputMode = "numeric";
+    hInp.maxLength = 2;
+    hInp.style.cssText = "width:48px;text-align:center;";
+    hInp.value = String(h12);
+
+    const colon = document.createElement('span');
+    colon.textContent = ":";
+    colon.style.fontWeight = "600";
+
+    const mInp = document.createElement('input');
+    mInp.type = "tel";
+    mInp.inputMode = "numeric";
+    mInp.maxLength = 2;
+    mInp.style.cssText = "width:48px;text-align:center;";
+    mInp.value = String(mm).padStart(2, "0");
+
+    const periodSel = document.createElement('select');
+    periodSel.style.width = "72px";
+    ["AM","PM"].forEach(p=>{
+      const o = document.createElement('option');
+      o.value = p;
+      o.textContent = p;
+      if(p === period) o.selected = true;
+      periodSel.appendChild(o);
+    });
+
+    function updateStored(){
+      const hh = parseInt(hInp.value, 10);
+      const mi = parseInt(mInp.value, 10);
+      if(isNaN(hh) || hh < 1 || hh > 12) return;
+      if(isNaN(mi) || mi < 0 || mi > 59) return;
+      let hh24 = hh % 12;
+      if(periodSel.value === "PM") hh24 += 12;
+      currentData.reminderTime = `${String(hh24).padStart(2,"0")}:${String(mi).padStart(2,"0")}`;
+    }
+
+    hInp.addEventListener('input', ()=>{
+      hInp.value = hInp.value.replace(/\D/g,'').slice(0,2);
+      updateStored();
+      if(hInp.value.length === 2) mInp.focus();
+    });
+    mInp.addEventListener('input', ()=>{
+      mInp.value = mInp.value.replace(/\D/g,'').slice(0,2);
+      updateStored();
+    });
+    mInp.addEventListener('keydown', (e)=>{ if(e.key === "Backspace" && !mInp.value) hInp.focus(); });
+    periodSel.addEventListener('change', updateStored);
+
+    updateStored(); // reflect the parsed/defaulted value immediately
+
+    timeWrap.appendChild(hInp);
+    timeWrap.appendChild(colon);
+    timeWrap.appendChild(mInp);
+    timeWrap.appendChild(periodSel);
+    return timeWrap;
   }
 
   function renderDynamic(){
@@ -4580,20 +4721,22 @@ function renderNotifications(step){
       }
     }
 
-    const btnRow = document.createElement('div');
-    btnRow.className = "btn-row";
-    btnRow.style.marginTop = "14px";
-    const yesBtn = document.createElement('button');
-    yesBtn.className = "btn btn-primary btn-compact";
-    yesBtn.textContent = "I'd like to get a reminder email";
-    yesBtn.onclick = () => { currentData.reminderOptIn = "Yes"; renderDynamic(); };
-    const noBtn = document.createElement('button');
-    noBtn.className = "btn btn-secondary btn-compact";
-    noBtn.textContent = "No thanks.";
-    noBtn.onclick = () => { currentData.reminderOptIn = "No"; renderDynamic(); };
-    btnRow.appendChild(yesBtn);
-    btnRow.appendChild(noBtn);
-    dynamicWrap.appendChild(btnRow);
+    if(currentData.reminderOptIn !== "Yes"){
+      const btnRow = document.createElement('div');
+      btnRow.className = "btn-row";
+      btnRow.style.marginTop = "14px";
+      const yesBtn = document.createElement('button');
+      yesBtn.className = "btn btn-primary btn-compact";
+      yesBtn.textContent = "I'd like to get a reminder email";
+      yesBtn.onclick = () => { currentData.reminderOptIn = "Yes"; renderDynamic(); };
+      const noBtn = document.createElement('button');
+      noBtn.className = "btn btn-secondary btn-compact";
+      noBtn.textContent = "No thanks.";
+      noBtn.onclick = () => { currentData.reminderOptIn = "No"; renderDynamic(); };
+      btnRow.appendChild(yesBtn);
+      btnRow.appendChild(noBtn);
+      dynamicWrap.appendChild(btnRow);
+    }
   }
 
   renderDynamic();
@@ -4642,6 +4785,14 @@ function renderNotifications(step){
 
     appendMainScreenLink(card, "Save & return to main screen");
   } else {
+    if(cameFromNavSubmenu){
+      const nextSectionLink = document.createElement('div');
+      nextSectionLink.className = "home-link";
+      nextSectionLink.textContent = "Save & go to the next section";
+      nextSectionLink.onclick = () => { cameFromNavSubmenu = false; advanceStep(step); };
+      card.appendChild(nextSectionLink);
+    }
+
     const firstLink = document.createElement('div');
     firstLink.className = "home-link";
     firstLink.textContent = cameFromWhatsLeft ? "Save & return to To-Do list" : "Save & choose a different section";
@@ -4868,6 +5019,14 @@ function renderContactInfo(step){
 
     appendMainScreenLink(card, "Save & return to main screen");
   } else {
+    if(cameFromNavSubmenu){
+      const nextSectionLink = document.createElement('div');
+      nextSectionLink.className = "home-link";
+      nextSectionLink.textContent = "Save & go to the next section";
+      nextSectionLink.onclick = () => { cameFromNavSubmenu = false; advanceStep(step); };
+      card.appendChild(nextSectionLink);
+    }
+
     const firstLink = document.createElement('div');
     firstLink.className = "home-link";
     firstLink.textContent = cameFromWhatsLeft ? "Save & return to To-Do list" : "Save & choose a different section";
@@ -5015,6 +5174,14 @@ function renderDonationKnowledge(step){
 
     appendMainScreenLink(card, "Save & return to main screen");
   } else {
+    if(cameFromNavSubmenu){
+      const nextSectionLink = document.createElement('div');
+      nextSectionLink.className = "home-link";
+      nextSectionLink.textContent = "Save & go to the next section";
+      nextSectionLink.onclick = () => { cameFromNavSubmenu = false; advanceStep(step); };
+      card.appendChild(nextSectionLink);
+    }
+
     const firstLink = document.createElement('div');
     firstLink.className = "home-link";
     firstLink.textContent = cameFromWhatsLeft ? "Save & return to To-Do list" : "Save & choose a different section";
