@@ -649,7 +649,7 @@ const STEPS = {
       {key:"instagram", label:"Instagram profile name", type:"text", required:true, placeholder:"@"},
       {key:"bio", label:"Bio", type:"textarea", required:true},
       {key:"headshot", label:"Headshot", type:"file", required:true, help:"We'll use this for marketing. Upload a high-resolution photo (JPG or PNG)."},
-      {key:"logo", label:"Your logo", type:"file", help:"If you don't have one, skip this. PNG with a transparent background is preferred, but JPEG works too."}
+      {key:"logo", label:"Your logo (if you have one in a landscaped orientation, that would be best)", type:"file", help:"If you don't have one, skip this. PNG with a transparent background is preferred, but JPEG works too."}
     ],
     next: () => "bingo-book"
   },
@@ -759,13 +759,27 @@ const STEPS = {
         "It's probably a no, but tell me about this new way of handling presales"
       ]}
     ],
-    next: (d) => d.preorderPlan === "No" ? "swag" : "preorder-books",
+    next: (d) => {
+      if(d.preorderPlan === "No") return "swag";
+      const sellingTitles = (d.sellingTitlesList || []).filter(t => t && t.trim());
+      if(d.sellingPlan === "I plan to sell books at the Soirée" && sellingTitles.length > 0){
+        return "preorder-from-selling";
+      }
+      return "preorder-books";
+    },
     shortcutDynamicButton: {
       watchField: "preorderPlan",
       showWhen: ["Yes", "It's probably a no, but tell me about this new way of handling presales"],
       label: "Add my presale books",
       target: "preorder-books"
     }
+  },
+
+  "preorder-from-selling": {
+    title: "Presale Books for the Soirée", icon: FLOURISH.bookStack,
+    sub: "You can add as many other books for presale as you want, but which, if any, of these will you also be offering in your presale?<br><br>Those you select will have the book title filled in for you on the next screen.",
+    customType: "preorderFromSelling",
+    next: () => "preorder-books"
   },
 
   "preorder-books": {
@@ -799,7 +813,7 @@ const STEPS = {
     info: true,
     body: `If you've been to the Soirée before you know that it's important to me that everyone goes home with a prize!<br><br>
     The committee has already started working tirelessly on finding prizes, but it takes a ridiculous amount of time to gather 175 different prizes for our book-loving community.<br><br>
-    Are you interested in donating a book or two or ten, or a whole series or two, as a prize? If so: YEAH! If not: I totally understand.<br><br>
+    Are you interested in donating a book or two or ten, or a whole series or two or ten as a prize? If so: YEAH! If not that's fine because this is 100% optional.<br><br>
     Each book/series that is donated will have a custom bookmark inside listing you as the donating author, and include a QR barcode to your website.<br><br>
     <strong>FYI:</strong> To be able to package prizes and keep my mental sanity, the deadline for receiving prizes is <strong>May 1</strong> <em>(an exception would be if someone is donating a book that comes out between May 1 and the Soirée)</em>.`,
     fields: [
@@ -899,7 +913,8 @@ const NAV_MENU = [
   {label:"Swag", target:"swag"},
   {label:"Prizes/Donated books", target:"__prizes__"},
   {label:"Where to mail or drop off swag & prizes", target:"dropoff"},
-  {label:"Social Media & Marketing information", target:"social-media"}
+  {label:"Social Media & Marketing information", target:"social-media"},
+  {label:"Notifications", target:"notifications"}
 ];
 
 /* Shared routing helpers: used by both "Go to a specific section" and the
@@ -1991,7 +2006,7 @@ function computeChecklist(){
   }
 
   // ---- Preorder plan ----
-  const preorderLabels = { "Yes":"have presale books.", "No":"no presale books." };
+  const preorderLabels = { "Yes":"presale books", "No":"no presale books." };
   sections.push({
     title: "Presale Books for the Soirée",
     rows: [
@@ -2512,6 +2527,12 @@ function renderSection(){
   if(step.customType === "preorderBooks"){
     app.removeChild(app.lastChild); // remove the logo lockup we just added; renderPreorderBooks adds its own
     renderPreorderBooks(step);
+    return;
+  }
+
+  if(step.customType === "preorderFromSelling"){
+    app.removeChild(app.lastChild); // remove the logo lockup we just added; renderPreorderFromSelling adds its own
+    renderPreorderFromSelling(step);
     return;
   }
 
@@ -3058,7 +3079,7 @@ function renderLinkVerification(step){
       <div class="eyebrow">Quick Check</div>
       <h1 class="section-title">Link Verification</h1>
       <div class="section-sub">Let's make sure all of your links work.</div>
-      <div class="info-box">Click each address (it will open in a new window). Come right back here and let me know if it looks right.</div>
+      <div class="info-box"><strong style="color:var(--terracotta);">CLICK EACH ADDRESS</strong> (it will open in a new window). Come right back here and let me know if it looks right.</div>
     `;
 
     const fields = linkVerificationFields();
@@ -3138,7 +3159,7 @@ function renderLinkVerification(step){
         linkLine.target = "_blank";
         linkLine.rel = "noopener";
         linkLine.textContent = currentData[f.key];
-        linkLine.style.cssText = "display:block;font-family:'Lora',serif;font-size:13.5px;color:var(--terracotta);word-break:break-all;margin:6px 0 10px;text-decoration:underline;";
+        linkLine.style.cssText = "display:block;font-family:'Lora',serif;font-size:16px;font-weight:700;color:var(--terracotta);word-break:break-all;margin:6px 0 10px;text-decoration:underline;";
         row.appendChild(linkLine);
 
         const btnRow = document.createElement('div');
@@ -3634,6 +3655,152 @@ function emptyPreorderBook(){
     seriesRegularPrice: "", seriesSoireePrice: "",
     _expanded: true
   };
+}
+
+/* ---------- SCREEN: PRESALE BOOKS FROM SELLING LIST (custom) ---------- */
+function renderPreorderFromSelling(step){
+  app.appendChild(logoLockup());
+  const card = document.createElement('div');
+  card.className = "card";
+  const titleImg = step.icon ? `<img src="${step.icon}">` : "";
+  card.innerHTML = `
+    <div class="eyebrow">Bookish Summer Soirée</div>
+    <h1 class="section-title">${titleImg}${step.title}</h1>
+    <div class="section-sub">${step.sub || ""}</div>
+  `;
+
+  const sellingTitles = (currentData.sellingTitlesList || []).filter(t => t && t.trim());
+  const existingPreorderTitles = (currentData.preorderBooksList || [])
+    .map(b => (b && b.title ? b.title.trim().toLowerCase() : ""));
+
+  const list = document.createElement('div');
+  list.style.cssText = "margin-top:14px;";
+  sellingTitles.forEach(title=>{
+    const optWrap = document.createElement('label');
+    optWrap.style.cssText = "display:flex;align-items:center;gap:10px;padding:10px 2px;"
+      + "font-family:'Lora',serif;font-size:15px;cursor:pointer;border-bottom:1px solid rgba(12,30,61,0.08);";
+    const alreadyAdded = existingPreorderTitles.indexOf(title.trim().toLowerCase()) !== -1;
+    const cb = document.createElement('input');
+    cb.type = "checkbox";
+    cb.style.cssText = "accent-color:var(--terracotta);width:18px;height:18px;flex-shrink:0;";
+    cb.checked = alreadyAdded;
+    cb.dataset.title = title;
+    const span = document.createElement('span');
+    span.textContent = title;
+    optWrap.appendChild(cb);
+    optWrap.appendChild(span);
+    list.appendChild(optWrap);
+  });
+  card.appendChild(list);
+
+  // Adds a presale entry for each checked title that doesn't already have
+  // one (matched case-insensitively). Never removes an entry on uncheck —
+  // someone may have already started filling one in, so this only adds.
+  function applySelections(){
+    const checked = Array.from(list.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.dataset.title);
+    if(!Array.isArray(currentData.preorderBooksList)) currentData.preorderBooksList = [];
+    const existing = currentData.preorderBooksList.map(b => (b && b.title ? b.title.trim().toLowerCase() : ""));
+    checked.forEach(title=>{
+      if(existing.indexOf(title.trim().toLowerCase()) === -1){
+        const newBook = emptyPreorderBook();
+        newBook.title = title;
+        newBook._expanded = false;
+        currentData.preorderBooksList.push(newBook);
+        existing.push(title.trim().toLowerCase());
+      }
+    });
+    // Top book box expanded, per request — the rest collapsed so the next
+    // screen doesn't open crazy-long.
+    currentData.preorderBooksList.forEach((b, i) => { b._expanded = (i === 0); });
+  }
+
+  const enteredViaShortcut = cameFromWhatsLeft || cameFromNavSubmenu;
+
+  if(!enteredViaShortcut){
+    const savePrompt = document.createElement('div');
+    savePrompt.className = "save-prompt";
+    savePrompt.textContent = "Save your answers and move to the next section?";
+    card.appendChild(savePrompt);
+
+    const btnRow = document.createElement('div');
+    btnRow.className = "btn-row";
+    const back = document.createElement('button');
+    back.className = "btn btn-secondary btn-tiny";
+    back.textContent = "\u2190 Back";
+    back.onclick = async () => {
+      applySelections();
+      await saveAuthorData(currentAuthor, currentData);
+      goBackSection();
+    };
+    const saveNext = document.createElement('button');
+    saveNext.className = "btn btn-primary btn-compact";
+    saveNext.textContent = "Yes, save & continue";
+    saveNext.onclick = () => { applySelections(); advanceStep(step); };
+    async function saveExitHandler(){
+      applySelections();
+      await saveAuthorData(currentAuthor, currentData);
+      showToast("Saved!");
+      currentScreen = "home";
+      render();
+    }
+    btnRow.appendChild(saveNext);
+    card.appendChild(btnRow);
+
+    const btnRowSecondary = document.createElement('div');
+    btnRowSecondary.className = "btn-row";
+    btnRowSecondary.style.marginTop = "20px";
+    btnRowSecondary.appendChild(back);
+    card.appendChild(btnRowSecondary);
+
+    const homeLink = document.createElement('div');
+    homeLink.className = "home-link";
+    homeLink.textContent = "Save & return to home screen";
+    homeLink.onclick = saveExitHandler;
+    card.appendChild(homeLink);
+
+    appendMainScreenLink(card, "Save & return to main screen");
+  } else {
+    if(cameFromNavSubmenu){
+      const nextSectionLink = document.createElement('div');
+      nextSectionLink.className = "home-link";
+      nextSectionLink.textContent = "Save & go to the next section";
+      nextSectionLink.onclick = () => { applySelections(); cameFromNavSubmenu = false; advanceStep(step); };
+      card.appendChild(nextSectionLink);
+    }
+
+    const firstLink = document.createElement('div');
+    firstLink.className = "home-link";
+    firstLink.textContent = cameFromWhatsLeft ? "Save & return to To-Do list" : "Save & choose a different section";
+    firstLink.onclick = async () => {
+      applySelections();
+      await saveAuthorData(currentAuthor, currentData);
+      if(cameFromWhatsLeft){
+        cameFromWhatsLeft = false;
+        currentScreen = "whats-left";
+      } else {
+        currentScreen = "nav-submenu";
+      }
+      render();
+    };
+    card.appendChild(firstLink);
+
+    const homeLink = document.createElement('div');
+    homeLink.className = "home-link";
+    homeLink.textContent = "Save & return to home screen";
+    homeLink.onclick = async () => {
+      applySelections();
+      await saveAuthorData(currentAuthor, currentData);
+      cameFromWhatsLeft = false;
+      cameFromNavSubmenu = false;
+      currentScreen = "home";
+      render();
+    };
+    card.appendChild(homeLink);
+
+    appendMainScreenLink(card, "Save & return to main screen");
+  }
+
+  app.appendChild(card);
 }
 
 function renderPreorderBooks(step){
@@ -4534,15 +4701,17 @@ function renderNotifications(step){
     const note = document.createElement('div');
     note.className = "help";
     note.style.cssText = "margin-top:14px;line-height:1.6;";
-    note.textContent = "Right now it is set so you will no longer receive the reminder email as soon as you complete the required information."
-      + (optionalGaps.length ? " If you select any of the following optional items the you'll still get that email until they are completed as well." : "");
+    note.innerHTML = "Right now it is set for you to get reminders until you have completed all the required items."
+      + (optionalGaps.length
+          ? " The <em>optional</em> items are listed below. If you'd like to make sure you get any of those done as well, select any of them you'd like to make sure you get done, and they will be added to your reminder email as well."
+          : "");
     wrap.appendChild(note);
 
     if(optionalGaps.length){
       const included = (currentData.reminderIncludeOptional || "").split(",").filter(Boolean);
       optionalGaps.forEach(gap=>{
         const optWrap = document.createElement('label');
-        optWrap.style.cssText = "display:flex;align-items:flex-start;gap:8px;padding:5px 2px;font-family:'Lora',serif;font-size:14px;cursor:pointer;";
+        optWrap.style.cssText = "display:flex;align-items:flex-start;gap:8px;padding:5px 2px 5px 20px;font-family:'Lora',serif;font-size:14px;cursor:pointer;";
         optWrap.innerHTML = `<input type="checkbox" style="margin-top:3px;accent-color:var(--terracotta);" ${included.indexOf(gap.key) !== -1 ? "checked" : ""}><span>${gap.label}</span>`;
         optWrap.querySelector('input').addEventListener('change', (e)=>{
           let list = (currentData.reminderIncludeOptional || "").split(",").filter(Boolean);
